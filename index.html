@@ -3949,9 +3949,9 @@ function handleRequest_(e, method) {
         }
         // Đồng thời xuất ra các bảng dễ đọc trực tiếp trên Google Sheets
         syncReadableSheets_(ss, payload.data);
-        return jsonResponse_({ ok: true, updatedAt: nowStr });
+        return jsonResponse_({ ok: true, updatedAt: nowStr }, e && e.parameter && e.parameter.callback);
       }
-      return jsonResponse_({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' });
+      return jsonResponse_({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' }, e && e.parameter && e.parameter.callback);
     }
 
     // GET: Đọc trạng thái mới nhất trả về cho trình duyệt
@@ -3959,14 +3959,14 @@ function handleRequest_(e, method) {
     const updatedAt = meta[0] || '';
     const chunkCount = Number(meta[2]) || 0;
     if (!updatedAt || chunkCount === 0) {
-      return jsonResponse_({ ok: true, empty: true, updatedAt: '' });
+      return jsonResponse_({ ok: true, empty: true, updatedAt: '' }, e && e.parameter && e.parameter.callback);
     }
     const chunkRows = stateSheet.getRange(3, 1, chunkCount, 1).getValues();
     const fullJson = chunkRows.map(r => r[0]).join('');
     const data = JSON.parse(fullJson);
-    return jsonResponse_({ ok: true, empty: false, updatedAt: String(updatedAt), data: data });
+    return jsonResponse_({ ok: true, empty: false, updatedAt: String(updatedAt), data: data }, e && e.parameter && e.parameter.callback);
   } catch (err) {
-    return jsonResponse_({ ok: false, error: String(err) });
+    return jsonResponse_({ ok: false, error: String(err) }, e && e.parameter && e.parameter.callback);
   } finally {
     lock.releaseLock();
   }
@@ -4000,8 +4000,13 @@ function syncReadableSheets_(ss, data) {
   shLog.getRange(1, 1, logRows.length, logRows[0].length).setValues(logRows);
 }
 
-function jsonResponse_(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+function jsonResponse_(obj, optCallback) {
+  const body = JSON.stringify(obj);
+  if (optCallback && /^[a-zA-Z0-9_$.]+$/.test(String(optCallback))) {
+    return ContentService.createTextOutput(String(optCallback) + '(' + body + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
 }`;
 
     let cloudSyncTimer = null;
@@ -4109,6 +4114,49 @@ function jsonResponse_(obj) {
       }
     }
 
+    function fetchCloudJsonViaJsonp(baseUrl, timeoutMs = 12000) {
+      return new Promise((resolve, reject) => {
+        const cbName = '__cydCloudCb_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        const sep = baseUrl.includes('?') ? '&' : '?';
+        const script = document.createElement('script');
+        let settled = false;
+
+        const cleanup = () => {
+          if (script.parentNode) script.parentNode.removeChild(script);
+          try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+        };
+
+        const timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            cleanup();
+            reject(new Error('Hết thời gian chờ phản hồi JSONP từ Google Apps Script.'));
+          }
+        }, timeoutMs);
+
+        window[cbName] = (payload) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            cleanup();
+            resolve(payload);
+          }
+        };
+
+        script.onerror = () => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            cleanup();
+            reject(new Error('Lỗi tải script JSONP từ Google Apps Script.'));
+          }
+        };
+
+        script.src = `${baseUrl}${sep}callback=${encodeURIComponent(cbName)}&t=${Date.now()}`;
+        document.body.appendChild(script);
+      });
+    }
+
     async function syncFromCloud(manualNotify = false) {
       const url = getCloudApiUrl();
       if (!url) return;
@@ -4117,9 +4165,14 @@ function jsonResponse_(obj) {
       isCloudSyncing = true;
       updateCloudSyncUI('syncing', 'Đang tải...');
       try {
-        const sep = url.includes('?') ? '&' : '?';
-        const res = await fetch(`${url}${sep}t=${Date.now()}`);
-        const json = await res.json();
+        let json = null;
+        try {
+          const sep = url.includes('?') ? '&' : '?';
+          const res = await fetch(`${url}${sep}t=${Date.now()}`);
+          json = await res.json();
+        } catch (fetchErr) {
+          json = await fetchCloudJsonViaJsonp(url);
+        }
         if (!json || !json.ok) {
           throw new Error((json && json.error) || 'Lỗi đọc dữ liệu');
         }
