@@ -1313,25 +1313,52 @@
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Tên đăng nhập</label>
-          <input id="loginUsername" type="text" required placeholder="Admin01" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+          <input id="loginUsername" type="text" required placeholder="Nhập tên đăng nhập..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu</label>
-          <input id="loginPassword" type="password" required placeholder="••••" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+          <input id="loginPassword" type="password" required placeholder="Nhập mật khẩu..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
         </div>
         <button type="submit" class="w-full py-3 rounded-xl btn-theme font-bold text-sm shadow-sm cursor-pointer">
           Đăng nhập ngay
         </button>
       </form>
+    </div>
+  </div>
 
-      <div class="mt-4 pt-3.5 border-t border-slate-100 text-center space-y-1.5">
-        <div class="text-xs text-slate-500">
-          Tài khoản quản trị cao nhất: <strong class="text-slate-800">Admin01</strong> hoặc <strong class="text-slate-800">Admin02</strong> • Mật khẩu mặc định: <strong class="text-theme">1234</strong>
+
+  <!-- ==================== MODAL: ĐỔI MẬT KHẨU CÁ NHÂN ==================== -->
+  <div id="changePasswordModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-slate-900">Đổi mật khẩu cá nhân</h3>
+          <p id="changePwdUserSubtitle" class="text-xs text-slate-500">Tài khoản đang đăng nhập</p>
         </div>
-        <button type="button" onclick="quickDemoLogin()" class="text-xs font-bold text-theme hover:underline cursor-pointer">
-          Điền nhanh & Đăng nhập Admin01
+        <button onclick="closeChangePasswordModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
+
+      <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu hiện tại <span class="text-rose-500">*</span></label>
+          <input id="cpOldPassword" type="password" required placeholder="Nhập mật khẩu hiện tại..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới <span class="text-rose-500">*</span></label>
+          <input id="cpNewPassword" type="password" required minlength="3" placeholder="Nhập mật khẩu mới..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Xác nhận mật khẩu mới <span class="text-rose-500">*</span></label>
+          <input id="cpConfirmPassword" type="password" required minlength="3" placeholder="Nhập lại mật khẩu mới..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl btn-theme font-bold text-sm shadow-sm cursor-pointer">
+          Lưu mật khẩu mới
+        </button>
+      </form>
     </div>
   </div>
 
@@ -1415,7 +1442,7 @@
     // 1. HẰNG SỐ & DỮ LIỆU MẶC ĐỊNH
     // =========================================================================
     const STORAGE_KEY = 'cyd_media_points_system_v5';
-    const DEFAULT_CLOUD_API_URL = 'https://script.google.com/macros/s/AKfycbzv-deR0gpCkyxM6AzZBCwIeMPJMrUatOg-5ZUerdbCoSOYMoqtu7udgWjUenAIAQ069Bw/exec'; // Dán URL Google Apps Script /exec vào đây nếu muốn cố định sẵn trong file HTML
+    const DEFAULT_CLOUD_API_URL = 'https://script.google.com/macros/s/AKfycbzv-deR0gpCkyxM6AzZBCwleMPjWRuatOg-5ZUerdbOoSOYMOqtu7udgWjUenAIAQO69Bw/exec'; // Dán URL Google Apps Script /exec vào đây nếu muốn cố định sẵn trong file HTML
     const BASE_SCORE = 10;
     const YEAR2_PRIORITY_MAJORS = ['Điều dưỡng', 'Hộ sinh', 'Y sĩ đa khoa'];
 
@@ -1827,6 +1854,60 @@
       showToast(`Chào mừng ${found.displayName} (${found.username})!`, 'success');
     }
 
+
+    function openChangePasswordModal() {
+      const u = appState.currentUser;
+      if (!u) return;
+      document.getElementById('changePwdUserSubtitle').textContent = `Tài khoản: ${u.displayName} (${u.username})`;
+      document.getElementById('cpOldPassword').value = '';
+      document.getElementById('cpNewPassword').value = '';
+      document.getElementById('cpConfirmPassword').value = '';
+      const modal = document.getElementById('changePasswordModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('cpOldPassword').focus(), 50);
+    }
+
+    function closeChangePasswordModal() {
+      const modal = document.getElementById('changePasswordModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleChangePasswordSubmit(e) {
+      e.preventDefault();
+      const u = appState.currentUser;
+      if (!u) return;
+      const oldPwd = document.getElementById('cpOldPassword').value.trim();
+      const newPwd = document.getElementById('cpNewPassword').value.trim();
+      const confirmPwd = document.getElementById('cpConfirmPassword').value.trim();
+
+      if (oldPwd !== u.password) {
+        showToast('Mật khẩu hiện tại không chính xác.', 'error');
+        return;
+      }
+      if (!newPwd || newPwd.length < 3) {
+        showToast('Mật khẩu mới phải có ít nhất 3 ký tự.', 'error');
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        showToast('Xác nhận mật khẩu mới không khớp.', 'error');
+        return;
+      }
+
+      const acc = appState.accounts.find(a => a.id === u.id || a.username === u.username);
+      if (acc) {
+        acc.password = newPwd;
+        appState.currentUser = acc;
+        saveState();
+        if (appState.activeTab === 'settings' && appState.activeSettingsSubtab === 'accounts') {
+          renderAccountsManager();
+        }
+        closeChangePasswordModal();
+        showToast('Đã đổi mật khẩu thành công và đồng bộ hệ thống!', 'success');
+      }
+    }
+
     function logoutUser() {
       appState.currentUser = null;
       updateAuthUI();
@@ -1846,6 +1927,12 @@
             <span class="text-xs font-extrabold text-slate-900 leading-tight">${escapeHtml(u.displayName)}</span>
             <span class="text-[11px] font-semibold text-theme leading-tight">${escapeHtml(u.roleLabel || u.username)}</span>
           </div>
+          <button type="button" onclick="openChangePasswordModal()" title="Đổi mật khẩu tài khoản hiện tại" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer">
+            <svg class="w-4 h-4 text-theme shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span class="hidden sm:inline">Đổi MK</span>
+          </button>
           <button type="button" onclick="logoutUser()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -4228,12 +4315,13 @@ function jsonResponse_(obj) {
       }
 
       // Đóng modal khi bấm ra ngoài hoặc nhấn Escape
-      ['loginModal', 'memberModal', 'editCategoryModal', 'confirmModal'].forEach(id => {
+      ['loginModal', 'changePasswordModal', 'memberModal', 'editCategoryModal', 'confirmModal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
           modal.addEventListener('click', e => {
             if (e.target === modal) {
               if (id === 'loginModal') closeLoginModal();
+              if (id === 'changePasswordModal') closeChangePasswordModal();
               if (id === 'memberModal') closeMemberModal();
               if (id === 'editCategoryModal') closeEditCategoryModal();
               if (id === 'confirmModal') closeConfirmModal();
@@ -4245,6 +4333,7 @@ function jsonResponse_(obj) {
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
           closeLoginModal();
+          closeChangePasswordModal();
           closeMemberModal();
           closeEditCategoryModal();
           closeConfirmModal();
