@@ -415,7 +415,7 @@
               <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 <th class="py-3.5 px-4 text-center w-16">Hạng</th>
                 <th class="py-3.5 px-4">Thành viên & Loại TV</th>
-                <th class="py-3.5 px-4">Ngành & Năm</th>
+                <th class="py-3.5 px-4">Lớp - Ngành - Năm</th>
                 <th class="py-3.5 px-3 text-center">Hệ số K</th>
                 <th class="py-3.5 px-3 text-center">Điểm P</th>
                 <th class="py-3.5 px-3 text-center">BCN (R)</th>
@@ -2423,16 +2423,15 @@
           }, true);
         }
         if (manifestEl) {
-          const startPath = (window.location.pathname && window.location.pathname.endsWith('/'))
-            ? window.location.pathname
-            : (window.location.pathname || '/');
+          const baseUrl = window.location.href.split('#')[0].split('?')[0];
+          const dirUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
           const manifestObj = {
-            id: startPath,
+            id: dirUrl,
             name: `${clubName} — Điểm Cống Hiến`,
             short_name: clubName,
             description: subtitle,
-            start_url: startPath,
-            scope: startPath,
+            start_url: baseUrl,
+            scope: dirUrl,
             display: 'standalone',
             background_color: '#f8fafc',
             theme_color: primary,
@@ -2851,8 +2850,9 @@
               </div>
             </td>
             <td class="py-3.5 px-4">
-              <div class="text-sm font-medium text-slate-800">${escapeHtml(m.major)}</div>
-              <div class="text-xs text-slate-500">Năm ${m.year} ${m.eligibleForK ? '• Gắn bó ≥ 1 năm' : '• Chưa đủ 1 năm'}</div>
+              <div class="text-xs font-extrabold text-theme">${getMemberClassLabel(m) ? 'Lớp ' + escapeHtml(getMemberClassLabel(m)) : '<span class="text-slate-400 font-semibold">Chưa cập nhật lớp</span>'}</div>
+              <div class="text-sm font-medium text-slate-800 mt-0.5">${escapeHtml(m.major)} • Năm ${m.year}</div>
+              <div class="text-xs text-slate-500">${m.eligibleForK ? 'Gắn bó ≥ 1 năm' : 'Chưa đủ 1 năm'}</div>
             </td>
             <td class="py-3.5 px-3 text-center">
               <span class="inline-flex px-2 py-1 rounded-lg text-xs font-bold ${m.K > 1 ? 'bg-theme-soft text-theme border border-theme-soft' : 'bg-slate-100 text-slate-600'}">×${m.K.toFixed(2)}</span>
@@ -5152,7 +5152,8 @@ function jsonResponse_(obj, optCallback) {
 
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+          const swUrl = new URL('./service-worker.js', window.location.href).href;
+          navigator.serviceWorker.register(swUrl).catch((err) => {
             console.warn('Service worker registration skipped:', err);
           });
         });
