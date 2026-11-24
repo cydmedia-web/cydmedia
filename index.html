@@ -2,7 +2,15 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" id="metaThemeColor" content="#0f766e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" id="metaAppleTitle" content="CYD Media" />
+  <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="" />
+  <link id="dynamicAppleIcon" rel="apple-touch-icon" href="" />
+  <link id="dynamicManifest" rel="manifest" href="" />
   <title>CLB CYD Media — Hệ thống Quản lý Điểm Cống Hiến</title>
 
   <!-- Tailwind CSS CDN -->
@@ -149,6 +157,18 @@
               </svg>
             </button>
           </div>
+          <button
+            type="button"
+            id="btnInstallPwaHeader"
+            onclick="openPwaInstallModal()"
+            title="Cài đặt ứng dụng lên màn hình chính iPhone / Android"
+            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-theme-soft bg-theme-soft hover:opacity-90 text-theme transition cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span class="hidden md:inline">Cài App</span>
+          </button>
           <button
             type="button"
             id="btnCloudSyncNow"
@@ -1541,6 +1561,61 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: HƯỚNG DẪN CÀI APP (iOS & ANDROID) ==================== -->
+  <div id="pwaInstallModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div id="pwaModalLogoPreview" class="w-12 h-12 rounded-2xl theme-gradient text-white flex items-center justify-center shadow-md shrink-0 overflow-hidden"></div>
+          <div>
+            <h3 id="pwaModalAppName" class="text-base font-extrabold text-slate-900">Cài đặt Ứng dụng CYD Media</h3>
+            <p class="text-xs text-slate-500">Mở toàn màn hình như app thật, tự đồng bộ logo & dữ liệu</p>
+          </div>
+        </div>
+        <button onclick="closePwaInstallModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="pwaNativePromptBox" class="hidden p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3">
+        <div class="text-xs text-emerald-900 font-semibold">Trình duyệt hỗ trợ cài đặt trực tiếp chỉ với 1 chạm:</div>
+        <button type="button" onclick="triggerNativePwaInstall()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold cursor-pointer shrink-0 shadow-xs">
+          Cài đặt ngay
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-700">
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+          <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
+            <span>🍎 Trên iPhone / iPad (Trình duyệt Safari):</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-600">
+            <li>Mở trang web này bằng <strong>Safari</strong>.</li>
+            <li>Bấm biểu tượng <strong>Chia sẻ (Share)</strong> <span class="inline-block px-1.5 py-0.5 rounded bg-white border border-slate-200 font-mono text-[11px]">⍐</span> ở thanh dưới cùng.</li>
+            <li>Kéo xuống chọn <strong>Thêm vào Màn hình chính (Add to Home Screen)</strong> → bấm <strong>Thêm</strong>.</li>
+          </ol>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+          <div class="font-extrabold text-slate-900 flex items-center gap-1.5">
+            <span>🤖 Trên điện thoại Android (Trình duyệt Chrome):</span>
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-600">
+            <li>Mở trang web này bằng <strong>Google Chrome</strong>.</li>
+            <li>Bấm dấu <strong>3 chấm (⋮)</strong> ở góc trên bên phải màn hình.</li>
+            <li>Chọn <strong>Cài đặt ứng dụng (Install app)</strong> hoặc <strong>Thêm vào màn hình chính</strong>.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <button type="button" onclick="closePwaInstallModal()" class="px-5 py-2 rounded-xl btn-theme text-xs font-bold cursor-pointer">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== TOAST NOTIFICATION ==================== -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
 
@@ -2243,7 +2318,7 @@
       document.getElementById('footerBrandText').textContent = `© 2026 ${s.clubName || 'CLB CYD Media'} — ${s.subtitle.split('•')[0].trim()}`;
       document.title = `${s.clubName || 'CLB CYD Media'} — Hệ thống Quản lý Điểm Cống Hiến`;
 
-      ['headerLogoContainer', 'settingsLogoPreview'].forEach(elId => {
+      ['headerLogoContainer', 'settingsLogoPreview', 'pwaModalLogoPreview'].forEach(elId => {
         const el = document.getElementById(elId);
         if (!el) return;
         if (s.logoUrl) {
@@ -2263,7 +2338,141 @@
       if (hexLabel) hexLabel.textContent = primary.toUpperCase();
       const logoInfo = document.getElementById('logoSourceInfo');
       if (logoInfo) logoInfo.textContent = s.logoUrl ? (s.logoSourceLabel || 'Logo tùy chỉnh') : 'Đang dùng logo mặc định (SVG)';
+      syncBrowserIconAndPwaManifest();
       applyCustomLabels();
+    }
+
+    let currentManifestBlobUrl = '';
+
+    function buildDefaultSvgDataUrl(primaryHex) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${primaryHex}"/><stop offset="100%" stop-color="${shadeHex(primaryHex, -0.22)}"/></linearGradient></defs><rect width="128" height="128" rx="28" fill="url(#g)"/><g fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" transform="translate(24,24) scale(3.33)"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></g></svg>`;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    function renderPngIconFromSource(srcUrl, size, callback) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            const ratio = Math.min(size / img.width, size / img.height);
+            const w = img.width * ratio;
+            const h = img.height * ratio;
+            ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+            callback(canvas.toDataURL('image/png'));
+          } catch (e) {
+            callback(srcUrl);
+          }
+        };
+        img.onerror = () => callback(srcUrl);
+        img.src = srcUrl;
+      } catch (e) {
+        callback(srcUrl);
+      }
+    }
+
+    function syncBrowserIconAndPwaManifest() {
+      const s = appState.settings || {};
+      const primary = s.primaryColor || '#0f766e';
+      const clubName = s.clubName || 'CLB CYD Media';
+      const subtitle = s.subtitle || 'Hệ thống Quản lý Điểm Cống Hiến';
+      const fallbackSvg = buildDefaultSvgDataUrl(primary);
+      const rawLogo = (s.logoUrl && String(s.logoUrl).trim()) ? String(s.logoUrl).trim() : fallbackSvg;
+
+      const metaTheme = document.getElementById('metaThemeColor');
+      if (metaTheme) metaTheme.setAttribute('content', primary);
+      const metaAppleTitle = document.getElementById('metaAppleTitle');
+      if (metaAppleTitle) metaAppleTitle.setAttribute('content', clubName);
+      const pwaAppName = document.getElementById('pwaModalAppName');
+      if (pwaAppName) pwaAppName.textContent = `Cài đặt Ứng dụng ${clubName}`;
+
+      const faviconEl = document.getElementById('dynamicFavicon');
+      const appleIconEl = document.getElementById('dynamicAppleIcon');
+      const manifestEl = document.getElementById('dynamicManifest');
+
+      if (faviconEl) {
+        faviconEl.type = rawLogo.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/png';
+        faviconEl.href = rawLogo;
+      }
+
+      renderPngIconFromSource(rawLogo, 512, (png512Url) => {
+        if (appleIconEl) appleIconEl.href = png512Url;
+        if (faviconEl && !rawLogo.startsWith('data:image/svg')) {
+          faviconEl.type = 'image/png';
+          faviconEl.href = png512Url;
+        }
+        if (manifestEl) {
+          const manifestObj = {
+            name: `${clubName} — Điểm Cống Hiến`,
+            short_name: clubName,
+            description: subtitle,
+            start_url: window.location.href.split('#')[0],
+            display: 'standalone',
+            background_color: '#f8fafc',
+            theme_color: primary,
+            orientation: 'portrait-primary',
+            icons: [
+              { src: png512Url, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+              { src: png512Url, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+            ]
+          };
+          if (currentManifestBlobUrl) URL.revokeObjectURL(currentManifestBlobUrl);
+          const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+          currentManifestBlobUrl = URL.createObjectURL(blob);
+          manifestEl.href = currentManifestBlobUrl;
+        }
+      });
+    }
+
+    let deferredPwaPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPwaPrompt = e;
+      const box = document.getElementById('pwaNativePromptBox');
+      if (box) box.classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      deferredPwaPrompt = null;
+      const box = document.getElementById('pwaNativePromptBox');
+      if (box) box.classList.add('hidden');
+      closePwaInstallModal();
+      showToast('Đã cài đặt ứng dụng lên màn hình chính thành công!', 'success');
+    });
+
+    function openPwaInstallModal() {
+      const modal = document.getElementById('pwaInstallModal');
+      if (!modal) return;
+      const box = document.getElementById('pwaNativePromptBox');
+      if (box) {
+        if (deferredPwaPrompt) box.classList.remove('hidden');
+        else box.classList.add('hidden');
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePwaInstallModal() {
+      const modal = document.getElementById('pwaInstallModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function triggerNativePwaInstall() {
+      if (!deferredPwaPrompt) return;
+      deferredPwaPrompt.prompt();
+      const { outcome } = await deferredPwaPrompt.userChoice;
+      if (outcome === 'accepted') {
+        deferredPwaPrompt = null;
+      }
     }
 
     function applyCustomLabels() {
@@ -4884,7 +5093,7 @@ function jsonResponse_(obj, optCallback) {
       }
 
       // Đóng modal khi bấm ra ngoài hoặc nhấn Escape
-      ['loginModal', 'changePasswordModal', 'memberModal', 'editCategoryModal', 'confirmModal'].forEach(id => {
+      ['loginModal', 'changePasswordModal', 'memberModal', 'editCategoryModal', 'confirmModal', 'pwaInstallModal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
           modal.addEventListener('click', e => {
@@ -4894,6 +5103,7 @@ function jsonResponse_(obj, optCallback) {
               if (id === 'memberModal') closeMemberModal();
               if (id === 'editCategoryModal') closeEditCategoryModal();
               if (id === 'confirmModal') closeConfirmModal();
+              if (id === 'pwaInstallModal') closePwaInstallModal();
             }
           });
         }
@@ -4906,6 +5116,7 @@ function jsonResponse_(obj, optCallback) {
           closeMemberModal();
           closeEditCategoryModal();
           closeConfirmModal();
+          closePwaInstallModal();
         }
       });
 
