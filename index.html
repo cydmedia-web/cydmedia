@@ -587,7 +587,7 @@
           <h2 data-ui-label="secScoringTitle" class="font-bold text-base sm:text-lg">Ghi nhận Điểm Cống Hiến</h2>
           <p class="text-xs text-white/85 mt-0.5">Tách rõ 3 nhóm: Hoạt động (P), Trách nhiệm BCN (R) và Vi phạm (D). Chỉ hiển thị các nhóm theo phân quyền tài khoản.</p>
         </div>
-        <button type="button" onclick="exportCSV()" class="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold transition cursor-pointer shadow-xs">
+        <button type="button" id="btnScoringExportCsv" onclick="exportCSV()" class="hidden px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold transition cursor-pointer shadow-xs">
           ⬇ Xuất bảng điểm CSV
         </button>
       </div>
@@ -816,13 +816,24 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Chức vụ / Phụ trách Ban Chủ nhiệm</label>
+                  <input id="statusNewRole" type="text" placeholder="VD: Phụ trách Ban Chủ nhiệm, Trưởng ban..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
+                  <div class="flex flex-wrap gap-1 mt-1.5">
+                    <button type="button" onclick="applyPresetRole('Phụ trách Ban Chủ nhiệm')" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-theme-soft text-theme border border-theme-soft hover:opacity-90 cursor-pointer">+ Phụ trách BCN</button>
+                    <button type="button" onclick="applyPresetRole('Chủ nhiệm CLB')" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">Chủ nhiệm</button>
+                    <button type="button" onclick="applyPresetRole('Phó Chủ nhiệm')" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">Phó CN</button>
+                    <button type="button" onclick="applyPresetRole('Thành viên')" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">Thành viên</button>
+                  </div>
+                </div>
+                <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1">Thời gian áp dụng <span class="text-rose-500">*</span></label>
                   <input id="statusTime" type="date" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
                 </div>
-                <div>
-                  <label class="block text-xs font-bold text-slate-700 mb-1">Lý do thay đổi / ghi chú <span class="text-rose-500">*</span></label>
-                  <input id="statusReason" type="text" required placeholder="VD: Bận thực tập lâm sàng xin tạm nghỉ 2 tháng..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
-                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Lý do thay đổi / ghi chú <span class="text-rose-500">*</span></label>
+                <input id="statusReason" type="text" required placeholder="VD: Phân công phụ trách Ban Chủ nhiệm hoặc tạm nghỉ..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
               </div>
 
               <button type="submit" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition cursor-pointer">
@@ -1808,6 +1819,10 @@
       return hasPerm('manageSettings') || hasPerm('manageAccounts');
     }
 
+    function isSuperAdmin() {
+      return Boolean(appState.currentUser && appState.currentUser.isSuperAdmin);
+    }
+
     function openLoginModal() {
       const modal = document.getElementById('loginModal');
       modal.classList.remove('hidden');
@@ -1959,6 +1974,7 @@
 
       toggleEl('btnEditRulesShortcut', hasPerm('manageSettings'));
       toggleEl('btnShortcutEditCats', hasPerm('manageSettings'));
+      toggleEl('btnScoringExportCsv', isSuperAdmin());
 
       renderLogs();
       if (appState.activeTab === 'scoring') renderScoringTab();
@@ -2900,7 +2916,22 @@
     function syncStatusFormMember() {
       const id = document.getElementById('statusMemberId').value;
       const m = appState.members.find(x => x.id === id);
-      if (m) document.getElementById('statusNewType').value = m.memberType || 'Chính thức';
+      if (m) {
+        document.getElementById('statusNewType').value = m.memberType || 'Chính thức';
+        const roleInput = document.getElementById('statusNewRole');
+        if (roleInput) roleInput.value = m.role || '';
+      }
+    }
+
+    function applyPresetRole(roleTitle) {
+      const roleInput = document.getElementById('statusNewRole');
+      if (!roleInput) return;
+      const cur = roleInput.value.trim();
+      if (!cur || cur === 'Thành viên') {
+        roleInput.value = roleTitle;
+      } else if (!cur.toLowerCase().includes(roleTitle.toLowerCase())) {
+        roleInput.value = `${cur} • ${roleTitle}`;
+      }
     }
 
     function updateNewMemberKPreview() {
@@ -2952,18 +2983,24 @@
       e.preventDefault();
       const memberId = document.getElementById('statusMemberId').value;
       const newType = document.getElementById('statusNewType').value;
+      const roleInput = document.getElementById('statusNewRole');
+      const newRole = roleInput ? roleInput.value.trim() : '';
       const time = document.getElementById('statusTime').value;
       const reason = document.getElementById('statusReason').value.trim();
 
       const m = appState.members.find(x => x.id === memberId);
       if (!m || !reason) return;
 
+      const oldRole = m.role || '';
+      const roleChanged = newRole && newRole !== oldRole;
       m.memberType = newType;
+      if (newRole) m.role = newRole;
       if (!Array.isArray(m.statusHistory)) m.statusHistory = [];
+      const roleNote = roleChanged ? ` • Chức vụ: "${oldRole}" → "${newRole}"` : (newRole ? ` • Chức vụ: ${newRole}` : '');
       m.statusHistory.push({
         type: newType,
         date: time,
-        reason: `${reason} (Cập nhật bởi: ${appState.currentUser ? appState.currentUser.displayName : 'Admin'})`
+        reason: `${reason}${roleNote} (Cập nhật bởi: ${appState.currentUser ? appState.currentUser.displayName : 'Admin'})`
       });
 
       // Nếu Đình chỉ hoặc Rời CLB thì tự động bỏ khỏi diện xét ĐTB
@@ -3263,17 +3300,19 @@
 
       const canAcc = hasPerm('manageAccounts');
       const canSet = hasPerm('manageSettings');
+      const superAdmin = isSuperAdmin();
 
       toggleEl('subtab-btn-accounts', canAcc);
       toggleEl('subtab-btn-branding', canSet);
       toggleEl('subtab-btn-categories', canSet);
       toggleEl('subtab-btn-rules', canSet);
-      toggleEl('subtab-btn-data', canSet);
+      toggleEl('subtab-btn-data', superAdmin);
       toggleEl('subtab-btn-labels', canSet);
-      toggleEl('subtab-btn-cloud', canSet);
+      toggleEl('subtab-btn-cloud', superAdmin);
 
       let sub = appState.activeSettingsSubtab;
-      if (sub === 'accounts' && !canAcc) sub = 'branding';
+      if ((sub === 'data' || sub === 'cloud') && !superAdmin) sub = canSet ? 'branding' : 'accounts';
+      if (sub === 'accounts' && !canAcc) sub = canSet ? 'branding' : 'accounts';
       if (sub !== 'accounts' && !canSet) sub = 'accounts';
       switchSettingsSubtab(sub);
     }
@@ -3787,6 +3826,7 @@
 
     // --- 7.5 Sao lưu / Phục hồi / CSV ---
     function exportFullBackupJSON() {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền sao lưu dữ liệu.', 'error'); return; }
       const payload = {
         app: 'CLB_CYD_Media_Points_System',
         version: '3.0',
@@ -3812,6 +3852,7 @@
     }
 
     function handleImportBackupJSON(e) {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền phục hồi dữ liệu.', 'error'); if (e && e.target) e.target.value = ''; return; }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -3860,6 +3901,7 @@
     }
 
     function exportCSV() {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền xuất dữ liệu CSV.', 'error'); return; }
       const { ranked, avgScore } = computeAllMemberScores();
       const headers = ['Hạng', 'Họ và tên', 'MSSV', 'Ngành học', 'Năm', 'Chức vụ', 'Loại TV', 'Hệ số K', 'Điểm P', 'BCN (R)', 'Trừ (D)', 'Tổng điểm T', 'ĐTB năm', 'Xếp loại'];
       const escCsv = val => `"${String(val ?? '').replace(/"/g, '""')}"`;
@@ -3883,6 +3925,7 @@
     }
 
     function confirmFactoryReset() {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền khôi phục mặc định.', 'error'); return; }
       openConfirmModal(
         'Khôi phục mặc định toàn bộ hệ thống?',
         'Tất cả dữ liệu hiện tại sẽ bị xóa và đặt lại về dữ liệu mẫu ban đầu (Tài khoản: Admin / 1234).',
@@ -4066,20 +4109,27 @@ function jsonResponse_(obj, optCallback) {
     }
 
     function queueCloudPush() {
+      // Chỉ tự động đẩy lên Cloud khi đã đăng nhập quản trị để tránh khách ghi đè dữ liệu
+      if (!appState.currentUser) return;
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
         pushAllToCloud(false);
-      }, 600);
+      }, 800);
     }
 
     async function pushAllToCloud(manualNotify = false) {
+      if (!isSuperAdmin()) {
+        if (manualNotify) showToast('Chỉ tài khoản Super Admin mới có quyền đẩy dữ liệu lên Google Sheets.', 'error');
+        return;
+      }
       const url = getCloudApiUrl();
       if (!url) {
         if (manualNotify) showToast('Chưa nhập đường dẫn Google Apps Script.', 'error');
         return;
       }
+      if (isCloudSyncing) return;
       isCloudSyncing = true;
-      updateCloudSyncUI('syncing', 'Đang lưu...');
+      updateCloudSyncUI('syncing', 'Đồng bộ nền...');
       try {
         const payload = {
           action: 'PUSH_STATE',
@@ -4177,9 +4227,9 @@ function jsonResponse_(obj, optCallback) {
           throw new Error((json && json.error) || 'Lỗi đọc dữ liệu');
         }
         if (json.empty) {
-          // Sheet mới tạo chưa có dữ liệu -> tự đẩy dữ liệu hiện tại lên làm bản gốc
-          isCloudSyncing = false;
-          await pushAllToCloud(manualNotify);
+          // Không tự động đẩy dữ liệu mặc định lên ghi đè khi Sheet trống
+          updateCloudSyncUI('ok');
+          if (manualNotify) showToast('Google Sheets hiện chưa có dữ liệu. Super Admin có thể bấm Đẩy dữ liệu lên.', 'info');
           return;
         }
         if (json.data && Array.isArray(json.data.members) && Array.isArray(json.data.logs)) {
@@ -4235,6 +4285,7 @@ function jsonResponse_(obj, optCallback) {
 
     async function saveCloudSyncConfig(e) {
       if (e) e.preventDefault();
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền cấu hình đồng bộ Cloud.', 'error'); return; }
       const input = document.getElementById('cloudApiUrlInput');
       const url = input ? input.value.trim() : '';
       if (!url || !url.startsWith('https://script.google.com/')) {
@@ -4247,6 +4298,7 @@ function jsonResponse_(obj, optCallback) {
     }
 
     function disconnectCloudSync() {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền ngắt kết nối Cloud.', 'error'); return; }
       openConfirmModal(
         'Ngắt kết nối đồng bộ Google Sheets?',
         'Hệ thống sẽ quay về lưu cục bộ trên trình duyệt. Dữ liệu đã lưu trên Google Sheets vẫn được giữ nguyên.',
@@ -4402,7 +4454,7 @@ function jsonResponse_(obj, optCallback) {
         if (getCloudApiUrl() && !document.hidden && !isCloudSyncing) {
           syncFromCloud(false);
         }
-      }, 30000);
+      }, 120000);
     }
 
     document.addEventListener('DOMContentLoaded', initApp);
