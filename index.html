@@ -120,13 +120,41 @@
         </div>
 
         <!-- Sync & Auth Controls -->
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div id="headerUndoRedoGroup" class="hidden inline-flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              id="btnGlobalUndo"
+              onclick="performGlobalUndo()"
+              disabled
+              title="Hoàn tác thao tác gần nhất (Undo)"
+              aria-label="Hoàn tác"
+              class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-200 hover:text-amber-700 disabled:opacity-35 disabled:hover:bg-slate-50 disabled:hover:border-slate-200 disabled:hover:text-slate-600 disabled:cursor-not-allowed text-slate-600 transition cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l-4-4m0 0l4-4m-4 4h11a4 4 0 010 8h-1" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              id="btnGlobalRedo"
+              onclick="performGlobalRedo()"
+              disabled
+              title="Làm lại thao tác vừa hoàn tác (Redo)"
+              aria-label="Làm lại"
+              class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-700 disabled:opacity-35 disabled:hover:bg-slate-50 disabled:hover:border-slate-200 disabled:hover:text-slate-600 disabled:cursor-not-allowed text-slate-600 transition cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 14l4-4m0 0l-4-4m4 4H8a4 4 0 000 8h1" />
+              </svg>
+            </button>
+          </div>
           <button
             type="button"
             id="btnCloudSyncNow"
             onclick="syncFromCloud(true)"
             title="Làm mới & đồng bộ dữ liệu trực tuyến từ Google Sheets"
-            class="hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+            class="hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition cursor-pointer shrink-0 whitespace-nowrap"
           >
             <svg id="syncSpinnerIcon" class="w-3.5 h-3.5 text-theme shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -814,6 +842,44 @@
                 </div>
               </div>
 
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Họ và tên</label>
+                  <input id="statusNewName" type="text" placeholder="Họ tên thành viên..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">MSSV</label>
+                  <input id="statusNewMssv" type="text" placeholder="VD: CYD001" class="w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Lớp (chuyển lớp / cập nhật)</label>
+                  <input id="statusNewClass" type="text" placeholder="VD: CĐD15E, CDPHCN16B..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Ngành học</label>
+                  <select id="statusNewMajor" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none">
+                    <option value="Điều dưỡng">Điều dưỡng</option>
+                    <option value="Hộ sinh">Hộ sinh</option>
+                    <option value="Y sĩ đa khoa">Y sĩ đa khoa</option>
+                    <option value="Dược">Dược</option>
+                    <option value="Phục hồi chức năng">Phục hồi chức năng</option>
+                    <option value="Y học cổ truyền">Y học cổ truyền</option>
+                    <option value="Xét nghiệm">Xét nghiệm</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Năm học</label>
+                  <select id="statusNewYear" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none">
+                    <option value="1">Năm 1</option>
+                    <option value="2">Năm 2</option>
+                    <option value="3">Năm 3</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label class="block text-xs font-bold text-slate-700 mb-1">Chức vụ / Phụ trách Ban Chủ nhiệm</label>
@@ -829,6 +895,21 @@
                   <label class="block text-xs font-bold text-slate-700 mb-1">Thời gian áp dụng <span class="text-rose-500">*</span></label>
                   <input id="statusTime" type="date" required class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none" />
                 </div>
+              </div>
+
+              <div class="space-y-2 pt-1">
+                <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input id="statusEligibleK" type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-300" />
+                  <span class="text-xs text-slate-700">
+                    <strong>Đủ điều kiện gắn bó ≥ 1 năm học</strong> (chỉ áp dụng K &gt; 1 khi là Chính thức).
+                  </span>
+                </label>
+                <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input id="statusInAvgPool" type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-300" />
+                  <span class="text-xs text-slate-700">
+                    <strong>Thuộc diện xét ĐTB</strong> (thành viên chính thức tham gia ≥ nửa năm học).
+                  </span>
+                </label>
               </div>
 
               <div>
@@ -1198,7 +1279,7 @@
           <form onsubmit="saveCloudSyncConfig(event)" class="space-y-4 pt-2 border-t border-slate-100">
             <div>
               <label class="block text-xs font-bold text-slate-800 mb-1.5">
-                Đường dẫn Google Apps Script Web App (URL kết thúc bằng <code>/exec</code>)
+                1. Đường dẫn Google Apps Script Web App (URL kết thúc bằng <code>/exec</code>)
               </label>
               <div class="flex flex-col sm:flex-row gap-2">
                 <input
@@ -1211,8 +1292,28 @@
                   Lưu & Kết nối ngay
                 </button>
               </div>
-              <p class="text-[11px] text-slate-500 mt-1.5">
-                Mẹo: Đường link này cũng tự động lưu trong file sao lưu <code>.json</code>. Sau khi kết nối 1 lần, anh chỉ cần gửi file HTML hoặc mở link web trên máy khác là tự nhận kết nối.
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <label class="block text-xs font-bold text-slate-800">
+                  2. Link thư mục Google Drive tự động lưu file <code>.json</code> mỗi ngày (Giữ 7 ngày gần nhất)
+                </label>
+                <span id="driveFolderStatusBadge" class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200/70 text-slate-600">Chưa gắn thư mục Drive</span>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input
+                  id="driveFolderUrlInput"
+                  type="text"
+                  placeholder="https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz..."
+                  class="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none font-mono"
+                />
+                <button type="button" onclick="saveDriveFolderConfig()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold cursor-pointer shrink-0">
+                  Lưu thư mục Drive
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-500">
+                Mỗi ngày có thao tác lưu dữ liệu, hệ thống sẽ tự tạo 1 thư mục con theo ngày (VD: <code>2026-11-24</code>) bên trong thư mục này, ghi file <code>CYD_Media_Backup_2026-11-24.json</code> và tự động xóa thư mục ngày cũ hơn <strong>7 ngày gần nhất</strong>.
               </p>
             </div>
 
@@ -1644,7 +1745,8 @@
         categories: getDefaultCategories(),
         rules: getDefaultRules(),
         uiLabels: getDefaultUiLabels(),
-        cloudApiUrl: DEFAULT_CLOUD_API_URL
+        cloudApiUrl: DEFAULT_CLOUD_API_URL,
+        driveFolderUrl: ''
       };
     }
 
@@ -1765,6 +1867,7 @@
               rules: (parsed.settings && Array.isArray(parsed.settings.rules)) ? parsed.settings.rules : defSet.rules,
               uiLabels: { ...getDefaultUiLabels(), ...((parsed.settings && parsed.settings.uiLabels) || {}) }
             };
+            lastCommittedSnapshot = getSerializableAppData();
             return;
           }
         }
@@ -1780,15 +1883,115 @@
       saveState();
     }
 
-    function saveState(skipCloudPush = false) {
+    let globalUndoStack = [];
+    let globalRedoStack = [];
+    let lastCommittedSnapshot = '';
+
+    function getSerializableAppData() {
+      return JSON.stringify({
+        members: appState.members,
+        logs: appState.logs,
+        attendanceSessions: appState.attendanceSessions,
+        accounts: appState.accounts,
+        settings: appState.settings
+      });
+    }
+
+    function updateGlobalUndoRedoUI() {
+      const btnUndo = document.getElementById('btnGlobalUndo');
+      const btnRedo = document.getElementById('btnGlobalRedo');
+      if (btnUndo) {
+        btnUndo.disabled = globalUndoStack.length === 0;
+        btnUndo.title = globalUndoStack.length > 0
+          ? `Hoàn tác (Undo) — còn ${globalUndoStack.length} bước`
+          : 'Chưa có thao tác nào để hoàn tác';
+      }
+      if (btnRedo) {
+        btnRedo.disabled = globalRedoStack.length === 0;
+        btnRedo.title = globalRedoStack.length > 0
+          ? `Làm lại (Redo) — còn ${globalRedoStack.length} bước`
+          : 'Chưa có thao tác nào để làm lại';
+      }
+    }
+
+    function applySnapshotJson(snapshotStr) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          members: appState.members,
-          logs: appState.logs,
-          attendanceSessions: appState.attendanceSessions,
-          accounts: appState.accounts,
-          settings: appState.settings
-        }));
+        const data = JSON.parse(snapshotStr);
+        const defSet = getDefaultSettings();
+        appState.members = Array.isArray(data.members) ? data.members : [];
+        appState.logs = Array.isArray(data.logs) ? data.logs : [];
+        appState.attendanceSessions = Array.isArray(data.attendanceSessions) ? data.attendanceSessions : [];
+        appState.accounts = (Array.isArray(data.accounts) && data.accounts.length > 0) ? data.accounts : getDefaultAccounts();
+        appState.settings = {
+          ...defSet,
+          ...(data.settings || {}),
+          categories: (data.settings && data.settings.categories) ? data.settings.categories : defSet.categories,
+          rules: (data.settings && Array.isArray(data.settings.rules)) ? data.settings.rules : defSet.rules,
+          uiLabels: { ...getDefaultUiLabels(), ...((data.settings && data.settings.uiLabels) || {}) }
+        };
+        if (appState.currentUser) {
+          const refreshed = appState.accounts.find(a => a.id === appState.currentUser.id || a.username === appState.currentUser.username);
+          if (refreshed && refreshed.active !== false) appState.currentUser = refreshed;
+        }
+        return true;
+      } catch (e) {
+        console.error('Lỗi khôi phục snapshot Undo/Redo:', e);
+        return false;
+      }
+    }
+
+    function refreshAllViewsAfterUndoRedo() {
+      applyThemeAndBranding();
+      populateLogMemberFilter();
+      renderRanking();
+      renderLogs();
+      renderRulesTab();
+      updateAuthUI();
+      updateGlobalUndoRedoUI();
+    }
+
+    function performGlobalUndo() {
+      if (!appState.currentUser || globalUndoStack.length === 0) return;
+      const currentStr = getSerializableAppData();
+      const prevStr = globalUndoStack.pop();
+      globalRedoStack.push(currentStr);
+      if (globalRedoStack.length > 25) globalRedoStack.shift();
+
+      if (applySnapshotJson(prevStr)) {
+        lastCommittedSnapshot = prevStr;
+        saveState(false, false);
+        refreshAllViewsAfterUndoRedo();
+        showToast('↶ Đã hoàn tác thao tác gần nhất!', 'info');
+      }
+    }
+
+    function performGlobalRedo() {
+      if (!appState.currentUser || globalRedoStack.length === 0) return;
+      const currentStr = getSerializableAppData();
+      const nextStr = globalRedoStack.pop();
+      globalUndoStack.push(currentStr);
+      if (globalUndoStack.length > 25) globalUndoStack.shift();
+
+      if (applySnapshotJson(nextStr)) {
+        lastCommittedSnapshot = nextStr;
+        saveState(false, false);
+        refreshAllViewsAfterUndoRedo();
+        showToast('↷ Đã làm lại thao tác vừa hoàn tác!', 'success');
+      }
+    }
+
+    function saveState(skipCloudPush = false, recordUndo = true) {
+      const currentStr = getSerializableAppData();
+      if (recordUndo && !skipCloudPush && appState.currentUser && lastCommittedSnapshot && currentStr !== lastCommittedSnapshot) {
+        globalUndoStack.push(lastCommittedSnapshot);
+        if (globalUndoStack.length > 25) globalUndoStack.shift();
+        globalRedoStack = [];
+      }
+      lastCommittedSnapshot = currentStr;
+      updateGlobalUndoRedoUI();
+
+      try {
+        localStorage.setItem(STORAGE_KEY, currentStr);
       } catch (e) {
         showToast('Bộ nhớ trình duyệt đầy, không thể lưu dữ liệu quá lớn.', 'error');
       }
@@ -1910,12 +2113,24 @@
       if (acc) {
         acc.password = newPwd;
         appState.currentUser = acc;
-        saveState();
+        saveState(true);
         if (appState.activeTab === 'settings' && appState.activeSettingsSubtab === 'accounts') {
           renderAccountsManager();
         }
         closeChangePasswordModal();
-        showToast('Đã đổi mật khẩu thành công và đồng bộ hệ thống!', 'success');
+        if (getCloudApiUrl()) {
+          showToast('Đang lưu mật khẩu mới lên hệ thống...', 'info');
+          if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+          pushAllToCloud(false).then((ok) => {
+            if (ok) {
+              showToast('Đã đổi mật khẩu và đồng bộ Google Sheets thành công!', 'success');
+            } else {
+              showToast('Đã lưu mật khẩu trên máy này, nhưng chưa đồng bộ được lên Google Sheets.', 'error');
+            }
+          });
+        } else {
+          showToast('Đã đổi mật khẩu thành công!', 'success');
+        }
       }
     }
 
@@ -1961,6 +2176,10 @@
           </button>
         `;
       }
+
+      // Hiện/ẩn nhóm nút Hoàn tác / Làm lại khi đã đăng nhập
+      toggleEl('headerUndoRedoGroup', Boolean(u));
+      updateGlobalUndoRedoUI();
 
       // Hiện/ẩn các tab bảo mật theo đúng phân quyền
       toggleEl('tab-btn-scoring', canAccessScoring());
@@ -2909,13 +3128,37 @@
       renderMembersManageList();
     }
 
+    function getMemberClassLabel(m) {
+      if (!m) return '';
+      if (m.className) return m.className;
+      const r = String(m.role || '');
+      if (r.startsWith('Lớp ')) return r.replace(/^Lớp\s+/i, '').trim();
+      return '';
+    }
+
+
+
     function syncStatusFormMember() {
       const id = document.getElementById('statusMemberId').value;
       const m = appState.members.find(x => x.id === id);
       if (m) {
         document.getElementById('statusNewType').value = m.memberType || 'Chính thức';
+        const nameInput = document.getElementById('statusNewName');
+        if (nameInput) nameInput.value = m.name || '';
+        const mssvInput = document.getElementById('statusNewMssv');
+        if (mssvInput) mssvInput.value = m.mssv || '';
+        const clsInput = document.getElementById('statusNewClass');
+        if (clsInput) clsInput.value = getMemberClassLabel(m);
+        const majorSel = document.getElementById('statusNewMajor');
+        if (majorSel && m.major) majorSel.value = m.major;
+        const yearSel = document.getElementById('statusNewYear');
+        if (yearSel && m.year) yearSel.value = String(m.year);
         const roleInput = document.getElementById('statusNewRole');
         if (roleInput) roleInput.value = m.role || '';
+        const eligCb = document.getElementById('statusEligibleK');
+        if (eligCb) eligCb.checked = Boolean(m.eligibleForK);
+        const poolCb = document.getElementById('statusInAvgPool');
+        if (poolCb) poolCb.checked = m.inAveragePool !== false;
       }
     }
 
@@ -2979,6 +3222,16 @@
       e.preventDefault();
       const memberId = document.getElementById('statusMemberId').value;
       const newType = document.getElementById('statusNewType').value;
+      const nameInput = document.getElementById('statusNewName');
+      const newName = nameInput ? nameInput.value.trim() : '';
+      const mssvInput = document.getElementById('statusNewMssv');
+      const newMssv = mssvInput ? mssvInput.value.trim().toUpperCase() : '';
+      const clsInput = document.getElementById('statusNewClass');
+      const newClass = clsInput ? clsInput.value.trim() : '';
+      const majorSel = document.getElementById('statusNewMajor');
+      const newMajor = majorSel ? majorSel.value : '';
+      const yearSel = document.getElementById('statusNewYear');
+      const newYear = yearSel ? Number(yearSel.value) : 0;
       const roleInput = document.getElementById('statusNewRole');
       const newRole = roleInput ? roleInput.value.trim() : '';
       const time = document.getElementById('statusTime').value;
@@ -2987,29 +3240,95 @@
       const m = appState.members.find(x => x.id === memberId);
       if (!m || !reason) return;
 
+      const oldName = m.name || '';
+      const oldMssv = m.mssv || '';
+      const oldClass = getMemberClassLabel(m);
+      const oldMajor = m.major || '';
+      const oldYear = Number(m.year) || 1;
       const oldRole = m.role || '';
-      const roleChanged = newRole && newRole !== oldRole;
-      m.memberType = newType;
-      if (newRole) m.role = newRole;
-      if (!Array.isArray(m.statusHistory)) m.statusHistory = [];
-      const roleNote = roleChanged ? ` • Chức vụ: "${oldRole}" → "${newRole}"` : (newRole ? ` • Chức vụ: ${newRole}` : '');
-      m.statusHistory.push({
-        type: newType,
-        date: time,
-        reason: `${reason}${roleNote} (Cập nhật bởi: ${appState.currentUser ? appState.currentUser.displayName : 'Admin'})`
-      });
+      const notes = [];
 
+      if (newName && newName !== oldName) {
+        m.name = newName;
+        notes.push(`Họ tên: "${oldName}" → "${newName}"`);
+      }
+
+      if (newMssv && newMssv !== oldMssv) {
+        m.mssv = newMssv;
+        notes.push(`MSSV: "${oldMssv}" → "${newMssv}"`);
+      }
+
+      if (newMajor && newMajor !== oldMajor) {
+        m.major = newMajor;
+        notes.push(`Ngành: "${oldMajor}" → "${newMajor}"`);
+      }
+
+      if (newYear && newYear !== oldYear) {
+        m.year = newYear;
+        notes.push(`Năm học: Năm ${oldYear} → Năm ${newYear}`);
+      }
+
+      if (newClass) {
+        m.className = newClass;
+        if (newClass !== oldClass) {
+          notes.push(`Lớp: "${oldClass || '—'}" → "${newClass}"`);
+          if (!newRole || oldRole.startsWith('Lớp ')) {
+            m.role = `Lớp ${newClass}`;
+          }
+        }
+      }
+
+      if (newRole && newRole !== m.role) {
+        m.role = newRole;
+        notes.push(`Chức vụ: "${oldRole}" → "${newRole}"`);
+      } else if (newRole && !m.role) {
+        m.role = newRole;
+        notes.push(`Chức vụ: ${newRole}`);
+      }
+
+      const eligCb = document.getElementById('statusEligibleK');
+      const poolCb = document.getElementById('statusInAvgPool');
+      const oldElig = Boolean(m.eligibleForK);
+      const oldPool = m.inAveragePool !== false;
+
+      if (eligCb) {
+        m.eligibleForK = Boolean(eligCb.checked);
+        if (m.eligibleForK !== oldElig) {
+          notes.push(`≥1 năm: ${m.eligibleForK ? 'Bật' : 'Tắt'}`);
+        }
+      }
+
+      if (poolCb) {
+        m.inAveragePool = Boolean(poolCb.checked);
+      }
+
+      m.memberType = newType;
       // Nếu Đình chỉ hoặc Rời CLB thì tự động bỏ khỏi diện xét ĐTB
       if (newType === 'Đình chỉ' || newType === 'Rời CLB') {
         m.inAveragePool = false;
       }
+      if (m.inAveragePool !== oldPool) {
+        notes.push(`Xét ĐTB: ${m.inAveragePool ? 'Có' : 'Không'}`);
+      }
+
+      if (!Array.isArray(m.statusHistory)) m.statusHistory = [];
+      const extraNote = notes.length > 0 ? ` • ${notes.join(' • ')}` : '';
+      m.statusHistory.push({
+        type: newType,
+        date: time,
+        reason: `${reason}${extraNote} (Cập nhật bởi: ${appState.currentUser ? appState.currentUser.displayName : 'Admin'})`
+      });
 
       saveState();
       document.getElementById('statusReason').value = '';
       renderMembersTab();
       renderRanking();
-      showToast(`Đã chuyển ${m.name} sang "${newType}"!`, 'success');
+      populateLogMemberFilter();
+      showToast(`Đã cập nhật thông tin thành viên ${m.name}!`, 'success');
     }
+
+
+
 
     function renderMembersManageList() {
       const container = document.getElementById('membersManageList');
@@ -3024,7 +3343,7 @@
                 <button type="button" onclick="openMemberDetail('${m.id}')" class="text-sm font-bold text-slate-900 hover:text-theme cursor-pointer">${escapeHtml(m.name)}</button>
                 <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${MEMBER_TYPE_STYLES[mType] || ''}">${escapeHtml(mType)}</span>
               </div>
-              <div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(m.mssv)} • ${escapeHtml(m.major)} N${m.year} • <strong class="text-theme">K=${K.toFixed(2)}</strong></div>
+              <div class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(m.mssv)} • ${escapeHtml(m.major)} N${m.year}${getMemberClassLabel(m) ? ` • Lớp ${escapeHtml(getMemberClassLabel(m))}` : ''} • <strong class="text-theme">K=${K.toFixed(2)}</strong></div>
               ${lastHist ? `<div class="text-[11px] text-slate-400 mt-0.5 truncate">Gần nhất (${formatDateVN(lastHist.date)}): ${escapeHtml(lastHist.reason)}</div>` : ''}
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -3951,7 +4270,7 @@
     // 13B. ĐỒNG BỘ TRỰC TUYẾN GOOGLE SHEETS (GOOGLE APPS SCRIPT)
     // =========================================================================
     const APPS_SCRIPT_TEMPLATE = `// MÃ NGUỒN GOOGLE APPS SCRIPT CHO HỆ THỐNG ĐIỂM CỐNG HIẾN CLB CYD MEDIA
-// Tự động tạo các sheet dữ liệu và đồng bộ 2 chiều với giao diện web
+// Tự động tạo sheet dữ liệu, đồng bộ 2 chiều và tự xuất file .json theo ngày vào Google Drive (giữ 7 ngày gần nhất)
 
 function doGet(e) {
   return handleRequest_(e, 'GET');
@@ -3988,7 +4307,15 @@ function handleRequest_(e, method) {
         }
         // Đồng thời xuất ra các bảng dễ đọc trực tiếp trên Google Sheets
         syncReadableSheets_(ss, payload.data);
-        return jsonResponse_({ ok: true, updatedAt: nowStr }, e && e.parameter && e.parameter.callback);
+
+        // Tự động xuất file .json vào thư mục Google Drive nếu đã điền link thư mục
+        let driveStatus = '';
+        const folderInput = (payload.data.settings && payload.data.settings.driveFolderUrl) ? String(payload.data.settings.driveFolderUrl).trim() : '';
+        if (folderInput) {
+          driveStatus = backupDailyJsonToDrive_(folderInput, payload.data, nowStr);
+        }
+
+        return jsonResponse_({ ok: true, updatedAt: nowStr, driveBackup: driveStatus }, e && e.parameter && e.parameter.callback);
       }
       return jsonResponse_({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' }, e && e.parameter && e.parameter.callback);
     }
@@ -4008,6 +4335,77 @@ function handleRequest_(e, method) {
     return jsonResponse_({ ok: false, error: String(err) }, e && e.parameter && e.parameter.callback);
   } finally {
     lock.releaseLock();
+  }
+}
+
+function extractDriveFolderId_(urlOrId) {
+  const str = String(urlOrId || '').trim();
+  if (!str) return '';
+  const m1 = str.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  if (m1 && m1[1]) return m1[1];
+  const m2 = str.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m2 && m2[1]) return m2[1];
+  if (/^[a-zA-Z0-9_-]{15,}$/.test(str)) return str;
+  return '';
+}
+
+function backupDailyJsonToDrive_(folderUrlOrId, data, nowIso) {
+  try {
+    const folderId = extractDriveFolderId_(folderUrlOrId);
+    if (!folderId) return 'INVALID_FOLDER_URL';
+    const rootFolder = DriveApp.getFolderById(folderId);
+    const todayStr = Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
+
+    // Tìm hoặc tạo thư mục con theo ngày (VD: 2026-11-24)
+    let dayFolder = null;
+    const subIter = rootFolder.getFoldersByName(todayStr);
+    if (subIter.hasNext()) {
+      dayFolder = subIter.next();
+    } else {
+      dayFolder = rootFolder.createFolder(todayStr);
+    }
+
+    // Đóng gói chuẩn định dạng file sao lưu .json của hệ thống
+    const backupPayload = {
+      app: 'CLB_CYD_Media_Points_System',
+      version: '3.0',
+      exportedAt: nowIso,
+      data: data
+    };
+    const prettyJson = JSON.stringify(backupPayload, null, 2);
+    const fileName = 'CYD_Media_Backup_' + todayStr + '.json';
+
+    // Ghi đè file mới nhất trong thư mục của ngày hôm nay
+    const fileIter = dayFolder.getFilesByName(fileName);
+    if (fileIter.hasNext()) {
+      const existingFile = fileIter.next();
+      existingFile.setContent(prettyJson);
+      while (fileIter.hasNext()) {
+        fileIter.next().setTrashed(true);
+      }
+    } else {
+      dayFolder.createFile(fileName, prettyJson, MimeType.PLAIN_TEXT);
+    }
+
+    // Chỉ giữ lại 7 thư mục ngày gần nhất (định dạng YYYY-MM-DD), cũ hơn đưa vào thùng rác
+    const allSubs = rootFolder.getFolders();
+    const datedFolders = [];
+    while (allSubs.hasNext()) {
+      const f = allSubs.next();
+      const name = f.getName();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(name)) {
+        datedFolders.push({ name: name, folder: f });
+      }
+    }
+    datedFolders.sort((a, b) => b.name.localeCompare(a.name));
+    if (datedFolders.length > 7) {
+      for (let i = 7; i < datedFolders.length; i++) {
+        datedFolders[i].folder.setTrashed(true);
+      }
+    }
+    return 'OK:' + todayStr;
+  } catch (e) {
+    return 'ERR:' + String(e);
   }
 }
 
@@ -4114,16 +4512,28 @@ function jsonResponse_(obj, optCallback) {
     }
 
     async function pushAllToCloud(manualNotify = false) {
-      if (!isSuperAdmin()) {
-        if (manualNotify) showToast('Chỉ tài khoản Super Admin mới có quyền đẩy dữ liệu lên Google Sheets.', 'error');
-        return;
+      if (!appState.currentUser) {
+        if (manualNotify) showToast('Vui lòng đăng nhập tài khoản quản trị để đồng bộ dữ liệu.', 'error');
+        return false;
+      }
+      if (manualNotify && !isSuperAdmin()) {
+        showToast('Chỉ tài khoản Super Admin mới có quyền đẩy đè thủ công toàn bộ dữ liệu lên Google Sheets.', 'error');
+        return false;
       }
       const url = getCloudApiUrl();
       if (!url) {
         if (manualNotify) showToast('Chưa nhập đường dẫn Google Apps Script.', 'error');
-        return;
+        return false;
       }
-      if (isCloudSyncing) return;
+      if (isCloudSyncing) {
+        // Đợi tác vụ đang chạy hoàn tất tối đa 5 giây thay vì bỏ qua mất dữ liệu
+        let waitMs = 0;
+        while (isCloudSyncing && waitMs < 5000) {
+          await new Promise(r => setTimeout(r, 150));
+          waitMs += 150;
+        }
+        if (isCloudSyncing) return false;
+      }
       isCloudSyncing = true;
       updateCloudSyncUI('syncing', 'Đồng bộ nền...');
       try {
@@ -4147,7 +4557,15 @@ function jsonResponse_(obj, optCallback) {
         if (json && json.ok) {
           lastKnownCloudTimestamp = json.updatedAt || lastKnownCloudTimestamp;
           updateCloudSyncUI('ok');
-          if (manualNotify) showToast('Đã đẩy toàn bộ dữ liệu lên Google Sheets thành công!', 'success');
+          if (json.driveBackup && String(json.driveBackup).startsWith('ERR:')) {
+            console.warn('Drive backup warning:', json.driveBackup);
+            if (manualNotify) showToast('Đã lưu Sheets, nhưng lỗi ghi Drive (kiểm tra quyền DriveApp hoặc link thư mục).', 'error');
+          } else if (json.driveBackup === 'INVALID_FOLDER_URL') {
+            if (manualNotify) showToast('Đã lưu Sheets, nhưng link thư mục Google Drive chưa hợp lệ.', 'error');
+          } else if (manualNotify) {
+            showToast(json.driveBackup ? 'Đã đẩy dữ liệu lên Sheets & sao lưu .json vào Drive!' : 'Đã đẩy toàn bộ dữ liệu lên Google Sheets thành công!', 'success');
+          }
+          return true;
         } else {
           throw new Error((json && json.error) || 'Lỗi phản hồi từ Apps Script');
         }
@@ -4155,6 +4573,7 @@ function jsonResponse_(obj, optCallback) {
         console.error('Cloud push error:', err);
         updateCloudSyncUI('error');
         if (manualNotify) showToast('Không thể đẩy dữ liệu lên Google Sheets. Kiểm tra lại URL hoặc quyền truy cập Web App.', 'error');
+        return false;
       } finally {
         isCloudSyncing = false;
       }
@@ -4206,6 +4625,11 @@ function jsonResponse_(obj, optCallback) {
     async function syncFromCloud(manualNotify = false) {
       const url = getCloudApiUrl();
       if (!url) return;
+      if (cloudSyncTimer && appState.currentUser) {
+        clearTimeout(cloudSyncTimer);
+        cloudSyncTimer = null;
+        await pushAllToCloud(false);
+      }
       if (isCloudSyncing) return;
 
       isCloudSyncing = true;
@@ -4243,7 +4667,10 @@ function jsonResponse_(obj, optCallback) {
             categories: (json.data.settings && json.data.settings.categories) ? json.data.settings.categories : defSet.categories,
             rules: (json.data.settings && Array.isArray(json.data.settings.rules)) ? json.data.settings.rules : defSet.rules,
             uiLabels: { ...getDefaultUiLabels(), ...((json.data.settings && json.data.settings.uiLabels) || {}) },
-            cloudApiUrl: currentUrl
+            cloudApiUrl: currentUrl,
+            driveFolderUrl: (json.data.settings && json.data.settings.driveFolderUrl !== undefined)
+              ? json.data.settings.driveFolderUrl
+              : ((appState.settings && appState.settings.driveFolderUrl) || '')
           };
           // Cập nhật lại currentUser nếu đang đăng nhập
           if (appState.currentUser) {
@@ -4271,24 +4698,65 @@ function jsonResponse_(obj, optCallback) {
       }
     }
 
+    function updateDriveFolderBadgeUI() {
+      const badge = document.getElementById('driveFolderStatusBadge');
+      if (!badge) return;
+      const folderUrl = ((appState.settings && appState.settings.driveFolderUrl) || '').trim();
+      if (folderUrl) {
+        badge.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800';
+        badge.textContent = '✓ Đã gắn thư mục Drive (Tự lưu 7 ngày)';
+      } else {
+        badge.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-200/70 text-slate-600';
+        badge.textContent = 'Chưa gắn thư mục Drive';
+      }
+    }
+
     function renderSettingsCloudSync() {
       const input = document.getElementById('cloudApiUrlInput');
+      const driveInput = document.getElementById('driveFolderUrlInput');
       const codeBlock = document.getElementById('appsScriptCodeBlock');
       if (input) input.value = getCloudApiUrl();
+      if (driveInput) driveInput.value = (appState.settings && appState.settings.driveFolderUrl) || '';
       if (codeBlock) codeBlock.textContent = APPS_SCRIPT_TEMPLATE;
+      updateDriveFolderBadgeUI();
       updateCloudSyncUI('ok');
+    }
+
+    async function saveDriveFolderConfig() {
+      if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền cấu hình thư mục Drive.', 'error'); return; }
+      const driveInput = document.getElementById('driveFolderUrlInput');
+      const folderVal = driveInput ? driveInput.value.trim() : '';
+      appState.settings.driveFolderUrl = folderVal;
+      updateDriveFolderBadgeUI();
+      saveState(true);
+      if (getCloudApiUrl()) {
+        showToast('Đang lưu cấu hình & tạo bản sao lưu hôm nay lên Drive...', 'info');
+        const ok = await pushAllToCloud(false);
+        if (ok) {
+          showToast(folderVal ? 'Đã lưu link thư mục Drive & xuất bản sao lưu hôm nay!' : 'Đã xóa cấu hình thư mục Drive.', 'success');
+        } else {
+          showToast('Đã lưu trên máy, nhưng chưa đồng bộ được lên Apps Script.', 'error');
+        }
+      } else {
+        showToast('Đã lưu link thư mục Drive vào cấu hình!', 'success');
+      }
     }
 
     async function saveCloudSyncConfig(e) {
       if (e) e.preventDefault();
       if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền cấu hình đồng bộ Cloud.', 'error'); return; }
       const input = document.getElementById('cloudApiUrlInput');
+      const driveInput = document.getElementById('driveFolderUrlInput');
       const url = input ? input.value.trim() : '';
       if (!url || !url.startsWith('https://script.google.com/')) {
         showToast('Đường dẫn phải bắt đầu bằng https://script.google.com/.../exec', 'error');
         return;
       }
       appState.settings.cloudApiUrl = url;
+      if (driveInput) {
+        appState.settings.driveFolderUrl = driveInput.value.trim();
+        updateDriveFolderBadgeUI();
+      }
       saveState(true);
       await syncFromCloud(true);
     }
