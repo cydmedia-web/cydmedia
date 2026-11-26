@@ -428,6 +428,31 @@
           </table>
         </div>
       </div>
+
+      <!-- Khu vực riêng dành cho tài khoản có quyền hạn: Danh sách thành viên Rời CLB / Đình chỉ -->
+      <div id="inactiveMembersSection" class="hidden bg-white rounded-2xl border border-rose-200/80 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-rose-50/60 border-b border-rose-100 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Danh sách thành viên Rời CLB / Đình chỉ</h3>
+            <p class="text-xs text-slate-600 mt-0.5">Tài khoản đăng nhập của nhóm này đã bị khóa tự động nhưng toàn bộ dữ liệu cũ vẫn được lưu giữ để khôi phục nếu quay lại CLB.</p>
+          </div>
+          <span id="inactiveMembersCountBadge" class="text-xs font-bold text-rose-700 bg-rose-100 px-3 py-1.5 rounded-full">0 thành viên</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[820px]">
+            <thead>
+              <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <th class="py-3 px-4">Thành viên & Trạng thái</th>
+                <th class="py-3 px-4">Lớp - Ngành - Năm</th>
+                <th class="py-3 px-4">Lý do & Thời gian cập nhật</th>
+                <th class="py-3 px-4 text-right">Điểm T lưu trữ</th>
+                <th class="py-3 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="inactiveMembersTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- ==================== TAB 2: NHẬT KÝ (CÔNG KHAI) ==================== -->
@@ -447,12 +472,12 @@
             />
           </div>
           <div>
-            <select id="logFilterMember" onchange="renderLogs()" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus-theme outline-none">
+            <select id="logFilterMember" onchange="resetLogsPaginationAndRender()" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus-theme outline-none">
               <option value="ALL">Tất cả thành viên</option>
             </select>
           </div>
           <div>
-            <select id="logFilterGroup" onchange="renderLogs()" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus-theme outline-none">
+            <select id="logFilterGroup" onchange="resetLogsPaginationAndRender()" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/70 focus:bg-white focus-theme outline-none">
               <option value="ALL">Tất cả loại điểm</option>
               <option value="P">Điểm cộng hoạt động (P)</option>
               <option value="R">Điểm trách nhiệm BCN (R)</option>
@@ -1423,33 +1448,88 @@
     </div>
   </footer>
 
-  <!-- ==================== MODAL: ĐĂNG NHẬP TÀI KHOẢN ==================== -->
-  <div id="loginModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-fade-in">
-      <div class="flex items-center justify-between mb-4">
+  <!-- ==================== GATE: CỔNG ĐĂNG NHẬP NỘI BỘ (LÀM MỜ TOÀN BỘ GIAO DIỆN) ==================== -->
+  <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/55 backdrop-blur-xl">
+    <div class="bg-white/95 rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-white/60 animate-fade-in">
+      <div class="text-center mb-5">
+        <div id="gateLogoContainer" class="w-14 h-14 mx-auto mb-3 rounded-full theme-gradient text-white flex items-center justify-center shadow-md overflow-hidden"></div>
+        <p class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+          Trang nội bộ, vui lòng nhập tài khoản để tiếp tục
+        </p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" autocomplete="off" class="space-y-3.5">
         <div>
-          <h3 class="text-lg font-extrabold text-slate-900">Đăng nhập Hệ thống</h3>
-          <p class="text-xs text-slate-500">Mở khóa các chức năng quản trị theo phân quyền.</p>
+          <label for="loginUsername" class="block text-xs font-bold text-slate-700 mb-1">Tài khoản</label>
+          <input
+            id="loginUsername"
+            name="cyd_user_field"
+            type="text"
+            required
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none"
+          />
         </div>
-        <button onclick="closeLoginModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+        <div>
+          <label for="loginPassword" class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu</label>
+          <input
+            id="loginPassword"
+            name="cyd_pass_field"
+            type="password"
+            required
+            autocomplete="new-password"
+            class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none"
+          />
+        </div>
+        <div id="loginGateError" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-center"></div>
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 rounded-xl btn-theme font-bold text-sm shadow-sm cursor-pointer">
+          Tiếp tục
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: XÁC THỰC LẠI MẬT KHẨU ĐỂ XÓA VĨNH VIỄN THÀNH VIÊN ==================== -->
+  <div id="purgeMemberModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span class="inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 mb-1">Thao tác không thể hoàn tác</span>
+          <h3 class="text-base font-extrabold text-slate-900">Xóa vĩnh viễn thành viên & toàn bộ dữ liệu</h3>
+        </div>
+        <button type="button" onclick="closePurgeMemberModal()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
+      <div id="purgeMemberSummary" class="p-3.5 rounded-2xl bg-rose-50/80 border border-rose-200 text-xs text-rose-900 leading-relaxed"></div>
+
+      <form onsubmit="handlePurgeMemberSubmit(event)" autocomplete="off" class="space-y-3.5">
+        <input type="hidden" id="purgeTargetMemberId" value="" />
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Tên đăng nhập</label>
-          <input id="loginUsername" type="text" required placeholder="Nhập tên đăng nhập..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+          <label for="purgeVerifyPassword" class="block text-xs font-bold text-slate-700 mb-1">
+            Nhập lại mật khẩu tài khoản đang đăng nhập để xác thực <span class="text-rose-500">*</span>
+          </label>
+          <input
+            id="purgeVerifyPassword"
+            type="password"
+            required
+            autocomplete="new-password"
+            class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus-theme outline-none"
+          />
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu</label>
-          <input id="loginPassword" type="password" required placeholder="Nhập mật khẩu..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus-theme outline-none" />
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="closePurgeMemberModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer">
+            Hủy bỏ
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold cursor-pointer shadow-xs">
+            Xác thực & Xóa vĩnh viễn
+          </button>
         </div>
-        <button type="submit" class="w-full py-3 rounded-xl btn-theme font-bold text-sm shadow-sm cursor-pointer">
-          Đăng nhập ngay
-        </button>
       </form>
     </div>
   </div>
@@ -1910,7 +1990,102 @@
       activeSettingsSubtab: 'accounts'
     };
 
+    const SESSION_AUTH_KEY = 'cyd_media_session_auth_v1';
+
+    function getDefaultMemberPassword(mssv) {
+      const clean = String(mssv || '').trim();
+      return clean.length >= 4 ? clean.slice(-4) : (clean || '1234');
+    }
+
+    function isMemberLockedStatus(memberType) {
+      return memberType === 'Rời CLB' || memberType === 'Đình chỉ';
+    }
+
+    function syncMemberAccounts(membersList, accountsList) {
+      const accs = Array.isArray(accountsList) ? [...accountsList] : getDefaultAccounts();
+      const mList = Array.isArray(membersList) ? membersList : [];
+      mList.forEach(m => {
+        const mssv = String(m.mssv || '').trim().toUpperCase();
+        if (!mssv) return;
+        const locked = isMemberLockedStatus(m.memberType || 'Chính thức');
+        let acc = accs.find(a => a.memberId === m.id || (!a.isSuperAdmin && String(a.username || '').trim().toUpperCase() === mssv));
+        if (!acc) {
+          accs.push({
+            id: 'acc_mem_' + m.id,
+            memberId: m.id,
+            username: mssv,
+            password: getDefaultMemberPassword(mssv),
+            displayName: m.name || mssv,
+            roleLabel: m.role || 'Thành viên CLB',
+            isSuperAdmin: false,
+            active: !locked,
+            permissions: {
+              addP: false, addR: false, addD: false,
+              manageMembers: false, attendance: false, deleteLogs: false,
+              manageSettings: false, manageAccounts: false
+            }
+          });
+        } else if (!acc.isSuperAdmin) {
+          acc.memberId = m.id;
+          acc.username = mssv;
+          acc.displayName = m.name || acc.displayName;
+          acc.roleLabel = m.role || acc.roleLabel || 'Thành viên CLB';
+          acc.active = !locked;
+          if (!acc.password) acc.password = getDefaultMemberPassword(mssv);
+        }
+      });
+      return accs;
+    }
+
+    function saveSessionCredentials(username, password) {
+      try {
+        sessionStorage.setItem(SESSION_AUTH_KEY, JSON.stringify({ username, password }));
+      } catch (e) {}
+    }
+
+    function getSessionCredentials() {
+      try {
+        const raw = sessionStorage.getItem(SESSION_AUTH_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return (parsed && parsed.username && parsed.password) ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function clearSessionCredentials() {
+      try {
+        sessionStorage.removeItem(SESSION_AUTH_KEY);
+      } catch (e) {}
+    }
+
     function loadState() {
+      // Bảo mật mức 1: Không hiển thị dữ liệu nội bộ trước khi xác thực phiên đăng nhập
+      const sess = getSessionCredentials();
+      if (!sess) {
+        const defSet = getDefaultSettings();
+        try {
+          const rawBranding = localStorage.getItem(STORAGE_KEY);
+          if (rawBranding) {
+            const parsedB = JSON.parse(rawBranding);
+            if (parsedB && parsedB.settings) {
+              if (parsedB.settings.logoUrl) defSet.logoUrl = parsedB.settings.logoUrl;
+              if (parsedB.settings.logoSourceLabel) defSet.logoSourceLabel = parsedB.settings.logoSourceLabel;
+              if (parsedB.settings.primaryColor) defSet.primaryColor = parsedB.settings.primaryColor;
+              if (parsedB.settings.clubName) defSet.clubName = parsedB.settings.clubName;
+              if (parsedB.settings.subtitle) defSet.subtitle = parsedB.settings.subtitle;
+            }
+          }
+        } catch (e) {}
+        appState.members = [];
+        appState.logs = [];
+        appState.attendanceSessions = [];
+        appState.accounts = getDefaultAccounts();
+        appState.settings = defSet;
+        appState.currentUser = null;
+        return;
+      }
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
@@ -1920,7 +2095,7 @@
             appState.members = parsed.members;
             appState.logs = parsed.logs;
             appState.attendanceSessions = Array.isArray(parsed.attendanceSessions) ? parsed.attendanceSessions : [];
-            appState.accounts = (Array.isArray(parsed.accounts) && parsed.accounts.length > 0) ? parsed.accounts : getDefaultAccounts();
+            appState.accounts = syncMemberAccounts(appState.members, (Array.isArray(parsed.accounts) && parsed.accounts.length > 0) ? parsed.accounts : getDefaultAccounts());
             appState.settings = {
               ...defSet,
               ...(parsed.settings || {}),
@@ -1931,20 +2106,28 @@
                 ? String(parsed.settings.driveFolderUrl).trim()
                 : DEFAULT_DRIVE_FOLDER_URL
             };
-            lastCommittedSnapshot = getSerializableAppData();
-            return;
+            const matched = appState.accounts.find(a =>
+              String(a.username || '').toLowerCase() === String(sess.username).toLowerCase() &&
+              a.password === sess.password &&
+              a.active !== false
+            );
+            if (matched) {
+              appState.currentUser = matched;
+              lastCommittedSnapshot = getSerializableAppData();
+              return;
+            }
           }
         }
       } catch (e) {
-        console.warn('Khởi tạo lại dữ liệu mẫu do lỗi localStorage.', e);
+        console.warn('Lỗi đọc dữ liệu phiên cục bộ.', e);
       }
-      const seed = getSeedData();
-      appState.members = seed.members;
-      appState.logs = seed.logs;
-      appState.attendanceSessions = seed.attendanceSessions;
-      appState.accounts = seed.accounts;
-      appState.settings = seed.settings;
-      saveState();
+      // Nếu chưa có cache cục bộ nhưng có session, sẽ xác thực lại qua Cloud ở initApp
+      appState.members = [];
+      appState.logs = [];
+      appState.attendanceSessions = [];
+      appState.accounts = getDefaultAccounts();
+      appState.settings = getDefaultSettings();
+      appState.currentUser = null;
     }
 
     let globalUndoStack = [];
@@ -2045,6 +2228,9 @@
     }
 
     function saveState(skipCloudPush = false, recordUndo = true) {
+      if (Array.isArray(appState.members) && appState.members.length > 0) {
+        appState.accounts = syncMemberAccounts(appState.members, appState.accounts);
+      }
       const currentStr = getSerializableAppData();
       if (recordUndo && !skipCloudPush && appState.currentUser && lastCommittedSnapshot && currentStr !== lastCommittedSnapshot) {
         globalUndoStack.push(lastCommittedSnapshot);
@@ -2086,25 +2272,97 @@
       return Boolean(appState.currentUser && appState.currentUser.isSuperAdmin);
     }
 
+    async function fetchPublicBrandingForGate() {
+      const url = getCloudApiUrl();
+      if (!url || appState.currentUser) return;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'GET_BRANDING' })
+        });
+        const json = await res.json();
+        if (json && json.ok && json.branding && !appState.currentUser) {
+          const b = json.branding;
+          if (b.logoUrl !== undefined) appState.settings.logoUrl = b.logoUrl;
+          if (b.primaryColor) appState.settings.primaryColor = b.primaryColor;
+          if (b.clubName) appState.settings.clubName = b.clubName;
+          if (b.subtitle) appState.settings.subtitle = b.subtitle;
+          applyThemeAndBranding();
+        }
+      } catch (e) {}
+    }
+
+    function showGateError(msg) {
+      const errEl = document.getElementById('loginGateError');
+      if (!errEl) return;
+      if (!msg) {
+        errEl.textContent = '';
+        errEl.classList.add('hidden');
+      } else {
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+      }
+    }
+
     function openLoginModal() {
       const modal = document.getElementById('loginModal');
+      if (!modal) return;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-      document.getElementById('loginUsername').value = '';
-      document.getElementById('loginPassword').value = '';
-      setTimeout(() => document.getElementById('loginUsername').focus(), 50);
+      showGateError('');
+      const uInp = document.getElementById('loginUsername');
+      const pInp = document.getElementById('loginPassword');
+      if (uInp) uInp.value = '';
+      if (pInp) pInp.value = '';
+      setTimeout(() => { if (uInp) uInp.focus(); }, 50);
     }
 
     function closeLoginModal() {
+      // Chỉ cho phép đóng cổng đăng nhập khi đã đăng nhập thành công
+      if (!appState.currentUser) return;
       const modal = document.getElementById('loginModal');
+      if (!modal) return;
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+      showGateError('');
     }
 
-    function quickDemoLogin() {
-      document.getElementById('loginUsername').value = 'Admin01';
-      document.getElementById('loginPassword').value = '1234';
-      attemptLogin('Admin01', '1234');
+    function applyCloudPayloadAfterAuth(payloadData, incomingTs, username, password) {
+      const defSet = getDefaultSettings();
+      const currentUrl = getCloudApiUrl();
+      const resolvedDriveUrl = (payloadData.settings && payloadData.settings.driveFolderUrl && String(payloadData.settings.driveFolderUrl).trim())
+        ? String(payloadData.settings.driveFolderUrl).trim()
+        : getDriveFolderUrl();
+
+      appState.members = Array.isArray(payloadData.members) ? payloadData.members : [];
+      appState.logs = Array.isArray(payloadData.logs) ? payloadData.logs : [];
+      appState.attendanceSessions = Array.isArray(payloadData.attendanceSessions) ? payloadData.attendanceSessions : [];
+      const rawAccs = (Array.isArray(payloadData.accounts) && payloadData.accounts.length > 0) ? payloadData.accounts : getDefaultAccounts();
+      appState.accounts = syncMemberAccounts(appState.members, rawAccs);
+      appState.settings = {
+        ...defSet,
+        ...(payloadData.settings || {}),
+        categories: (payloadData.settings && payloadData.settings.categories) ? payloadData.settings.categories : defSet.categories,
+        rules: (payloadData.settings && Array.isArray(payloadData.settings.rules)) ? payloadData.settings.rules : defSet.rules,
+        uiLabels: { ...getDefaultUiLabels(), ...((payloadData.settings && payloadData.settings.uiLabels) || {}) },
+        cloudApiUrl: currentUrl,
+        driveFolderUrl: resolvedDriveUrl
+      };
+
+      const matched = appState.accounts.find(a =>
+        String(a.username || '').toLowerCase() === String(username).toLowerCase() &&
+        a.password === password
+      );
+      if (!matched) return { ok: false, error: 'Tài khoản hoặc mật khẩu không chính xác.' };
+      if (matched.active === false) return { ok: false, error: 'Tài khoản đã bị khóa do Rời CLB hoặc Đình chỉ.' };
+
+      appState.currentUser = matched;
+      if (incomingTs) lastKnownCloudTimestamp = String(incomingTs);
+      saveSessionCredentials(matched.username, password);
+      lastCommittedSnapshot = getSerializableAppData();
+      saveState(true, false);
+      return { ok: true, user: matched };
     }
 
     function handleLoginSubmit(e) {
@@ -2114,24 +2372,115 @@
       attemptLogin(u, p);
     }
 
-    function attemptLogin(username, password) {
-      const found = appState.accounts.find(a =>
-        a.username.toLowerCase() === username.toLowerCase() && a.password === password
-      );
-      if (!found) {
-        showToast('Sai tên đăng nhập hoặc mật khẩu.', 'error');
-        return;
+    async function attemptLogin(username, password, silent = false) {
+      if (!username || !password) return false;
+      const btn = document.getElementById('btnLoginSubmit');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Đang xác thực...';
       }
-      if (found.active === false) {
-        showToast('Tài khoản này đang bị tạm khóa bởi quản trị viên.', 'error');
-        return;
-      }
-      appState.currentUser = found;
-      closeLoginModal();
-      updateAuthUI();
-      showToast(`Chào mừng ${found.displayName} (${found.username})!`, 'success');
-    }
+      showGateError('');
 
+      const url = getCloudApiUrl();
+      if (url) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'LOGIN_AND_FETCH',
+              username: username,
+              password: password
+            })
+          });
+          const json = await res.json();
+          if (json && json.ok && json.empty) {
+            // Sheet chưa có dữ liệu: khởi tạo dữ liệu mẫu cục bộ và kiểm tra tài khoản mặc định
+            const seed = getSeedData();
+            seed.accounts = syncMemberAccounts(seed.members, seed.accounts);
+            const applied = applyCloudPayloadAfterAuth(seed, '', username, password);
+            if (!applied.ok) {
+              if (!silent) showGateError(applied.error);
+              return false;
+            }
+          } else if (json && json.ok && json.data) {
+            const applied = applyCloudPayloadAfterAuth(json.data, json.updatedAt, username, password);
+            if (!applied.ok) {
+              if (!silent) showGateError(applied.error);
+              return false;
+            }
+          } else {
+            const errMsg = (json && json.error) ? json.error : 'Tài khoản hoặc mật khẩu không chính xác.';
+            if (!silent) showGateError(errMsg);
+            return false;
+          }
+
+          closeLoginModal();
+          applyThemeAndBranding();
+          populateLogMemberFilter();
+          updateAuthUI();
+          renderRanking();
+          renderLogs();
+          renderRulesTab();
+          switchTab('ranking');
+          if (!silent) showToast(`Xin chào ${appState.currentUser.displayName}!`, 'success');
+          return true;
+        } catch (err) {
+          console.warn('Lỗi xác thực Cloud, chuyển sang kiểm tra dữ liệu cục bộ:', err);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Tiếp tục';
+          }
+        }
+      }
+
+      // Fallback cục bộ khi ngoại tuyến
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Tiếp tục';
+      }
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const applied = applyCloudPayloadAfterAuth(parsed, '', username, password);
+          if (applied.ok) {
+            closeLoginModal();
+            applyThemeAndBranding();
+            populateLogMemberFilter();
+            updateAuthUI();
+            renderRanking();
+            renderLogs();
+            renderRulesTab();
+            switchTab('ranking');
+            if (!silent) showToast(`Xin chào ${appState.currentUser.displayName}!`, 'success');
+            return true;
+          } else {
+            if (!silent) showGateError(applied.error);
+            return false;
+          }
+        }
+      } catch (e) {}
+
+      const seed = getSeedData();
+      seed.accounts = syncMemberAccounts(seed.members, seed.accounts);
+      const appliedSeed = applyCloudPayloadAfterAuth(seed, '', username, password);
+      if (appliedSeed.ok) {
+        closeLoginModal();
+        applyThemeAndBranding();
+        populateLogMemberFilter();
+        updateAuthUI();
+        renderRanking();
+        renderLogs();
+        renderRulesTab();
+        switchTab('ranking');
+        if (!silent) showToast(`Xin chào ${appState.currentUser.displayName}!`, 'success');
+        return true;
+      }
+      if (!silent) showGateError('Tài khoản hoặc mật khẩu không chính xác.');
+      return false;
+    }
 
     function openChangePasswordModal() {
       const u = appState.currentUser;
@@ -2152,7 +2501,7 @@
       modal.classList.remove('flex');
     }
 
-    function handleChangePasswordSubmit(e) {
+    async function handleChangePasswordSubmit(e) {
       e.preventDefault();
       const u = appState.currentUser;
       if (!u) return;
@@ -2173,45 +2522,84 @@
         return;
       }
 
-      const acc = appState.accounts.find(a => a.id === u.id || a.username === u.username);
-      if (acc) {
-        acc.password = newPwd;
-        appState.currentUser = acc;
-        saveState(true);
-        if (appState.activeTab === 'settings' && appState.activeSettingsSubtab === 'accounts') {
-          renderAccountsManager();
-        }
-        closeChangePasswordModal();
-        if (getCloudApiUrl()) {
-          showToast('Đang lưu mật khẩu mới lên hệ thống...', 'info');
-          if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
-          pushAllToCloud(false).then((ok) => {
-            if (ok) {
-              showToast('Đã đổi mật khẩu và đồng bộ Google Sheets thành công!', 'success');
-            } else {
-              showToast('Đã lưu mật khẩu trên máy này, nhưng chưa đồng bộ được lên Google Sheets.', 'error');
-            }
+      const acc = appState.accounts.find(a => a.id === u.id || String(a.username).toLowerCase() === String(u.username).toLowerCase());
+      if (!acc) return;
+
+      const url = getCloudApiUrl();
+      if (url) {
+        showToast('Đang cập nhật mật khẩu mới lên hệ thống...', 'info');
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'CHANGE_PASSWORD',
+              username: u.username,
+              oldPassword: oldPwd,
+              newPassword: newPwd
+            })
           });
-        } else {
-          showToast('Đã đổi mật khẩu thành công!', 'success');
+          const json = await res.json();
+          if (!json || !json.ok) {
+            showToast((json && json.error) || 'Không thể đổi mật khẩu trên máy chủ.', 'error');
+            return;
+          }
+          if (json.updatedAt) lastKnownCloudTimestamp = String(json.updatedAt);
+        } catch (err) {
+          showToast('Lỗi kết nối máy chủ khi đổi mật khẩu.', 'error');
+          return;
         }
       }
+
+      acc.password = newPwd;
+      appState.currentUser = acc;
+      saveSessionCredentials(acc.username, newPwd);
+      saveState(true, false);
+      if (appState.activeTab === 'settings' && appState.activeSettingsSubtab === 'accounts') {
+        renderAccountsManager();
+      }
+      closeChangePasswordModal();
+      showToast('Đã đổi mật khẩu thành công!', 'success');
     }
 
     function logoutUser() {
+      const keepLogo = appState.settings ? appState.settings.logoUrl : '';
+      const keepColor = appState.settings ? appState.settings.primaryColor : '#0f766e';
+      const keepName = appState.settings ? appState.settings.clubName : 'CLB CYD Media';
+      const keepSub = appState.settings ? appState.settings.subtitle : '';
+      clearSessionCredentials();
       appState.currentUser = null;
+      appState.members = [];
+      appState.logs = [];
+      appState.attendanceSessions = [];
+      appState.accounts = getDefaultAccounts();
+      appState.settings = {
+        ...getDefaultSettings(),
+        logoUrl: keepLogo,
+        primaryColor: keepColor,
+        clubName: keepName,
+        subtitle: keepSub
+      };
+      globalUndoStack = [];
+      globalRedoStack = [];
+      applyThemeAndBranding();
       updateAuthUI();
-      if (!['ranking', 'logs', 'rules'].includes(appState.activeTab)) {
-        switchTab('ranking');
-      }
-      showToast('Đã đăng xuất khỏi chế độ quản trị.', 'info');
+      renderRanking();
+      renderLogs();
+      openLoginModal();
+      showToast('Đã đăng xuất khỏi hệ thống.', 'info');
     }
 
     function updateAuthUI() {
       const authArea = document.getElementById('headerAuthArea');
+      const loginModal = document.getElementById('loginModal');
       const u = appState.currentUser;
 
       if (u) {
+        if (loginModal) {
+          loginModal.classList.add('hidden');
+          loginModal.classList.remove('flex');
+        }
         authArea.innerHTML = `
           <div class="hidden md:flex flex-col text-right mr-1">
             <span class="text-xs font-extrabold text-slate-900 leading-tight">${escapeHtml(u.displayName)}</span>
@@ -2231,11 +2619,12 @@
           </button>
         `;
       } else {
+        if (loginModal) {
+          loginModal.classList.remove('hidden');
+          loginModal.classList.add('flex');
+        }
         authArea.innerHTML = `
           <button type="button" onclick="openLoginModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold btn-theme shadow-sm cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-            </svg>
             <span>Đăng nhập</span>
           </button>
         `;
@@ -2307,7 +2696,7 @@
       document.getElementById('footerBrandText').textContent = `© 2026 ${s.clubName || 'CLB CYD Media'} — ${s.subtitle.split('•')[0].trim()}`;
       document.title = `${s.clubName || 'CLB CYD Media'} — Hệ thống Quản lý Điểm Cống Hiến`;
 
-      ['headerLogoContainer', 'settingsLogoPreview', 'pwaModalLogoPreview'].forEach(elId => {
+      ['headerLogoContainer', 'settingsLogoPreview', 'pwaModalLogoPreview', 'gateLogoContainer'].forEach(elId => {
         const el = document.getElementById(elId);
         if (!el) return;
         if (s.logoUrl) {
@@ -2790,12 +3179,23 @@
 
       renderKpiDetailPanel(data);
 
+      const activeRanked = ranked.filter(m => !isMemberLockedStatus(m.memberType));
+      const inactiveRanked = ranked.filter(m => isMemberLockedStatus(m.memberType));
+
+      // Cập nhật lại KPI theo danh sách thành viên đang hoạt động (ẩn TV Rời CLB / Đình chỉ khỏi bảng chung)
+      document.getElementById('kpiTotalMembers').textContent = activeRanked.length;
+      document.getElementById('kpiPoolCount').textContent = `${poolMembers.length} thuộc diện ĐTB`;
+      document.getElementById('kpiAvgScore').textContent = avgScore.toFixed(2);
+      document.getElementById('kpiAvgMonthly').textContent = avgMonthly.toFixed(2);
+      document.getElementById('kpiAboveAvg').textContent = activeRanked.filter(m => m.statusKey === 'ABOVE_AVG').length;
+      document.getElementById('kpiWarningCount').textContent = activeRanked.filter(m => m.T < 20).length;
+
       const q = document.getElementById('filterSearch').value.trim().toLowerCase();
       const fMajor = document.getElementById('filterMajor').value;
       const fYear = document.getElementById('filterYear').value;
       const fStatus = document.getElementById('filterStatus').value;
 
-      const filtered = ranked.filter(m => {
+      const filtered = activeRanked.filter(m => {
         if (q && !`${m.name} ${m.mssv} ${m.role} ${m.major} ${m.memberType}`.toLowerCase().includes(q)) return false;
         if (fMajor !== 'ALL' && m.major !== fMajor) return false;
         if (fYear !== 'ALL' && String(m.year) !== fYear) return false;
@@ -2807,7 +3207,8 @@
         return true;
       });
 
-      document.getElementById('rankingCountInfo').textContent = `Hiển thị ${filtered.length} / ${ranked.length} thành viên`;
+      document.getElementById('rankingCountInfo').textContent = `Hiển thị ${filtered.length} / ${activeRanked.length} thành viên`;
+      renderInactiveMembersSection(inactiveRanked);
 
       const tbody = document.getElementById('rankingTableBody');
       if (filtered.length === 0) {
@@ -2863,6 +3264,135 @@
           </tr>
         `;
       }).join('');
+    }
+
+    function renderInactiveMembersSection(inactiveList) {
+      const section = document.getElementById('inactiveMembersSection');
+      const tbody = document.getElementById('inactiveMembersTableBody');
+      const badge = document.getElementById('inactiveMembersCountBadge');
+      if (!section || !tbody) return;
+
+      const canManage = hasPerm('manageMembers');
+      if (!canManage) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      if (badge) badge.textContent = `${inactiveList.length} thành viên`;
+
+      if (inactiveList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-xs text-slate-400">Hiện không có thành viên nào ở trạng thái Rời CLB hoặc Đình chỉ.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = inactiveList.map(m => {
+        const lastHist = (Array.isArray(m.statusHistory) && m.statusHistory.length > 0)
+          ? m.statusHistory[m.statusHistory.length - 1]
+          : null;
+        const typeBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${MEMBER_TYPE_STYLES[m.memberType] || MEMBER_TYPE_STYLES['Rời CLB']}">${escapeHtml(m.memberType)}</span>`;
+
+        return `
+          <tr class="hover:bg-rose-50/30 transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="openMemberDetail('${m.id}')" class="font-bold text-slate-900 hover:text-theme cursor-pointer text-left">${escapeHtml(m.name)}</button>
+                ${typeBadge}
+              </div>
+              <div class="text-xs text-slate-500 mt-0.5">
+                <span class="font-mono text-[11px] bg-slate-100 px-1.5 py-0.5 rounded">${escapeHtml(m.mssv)}</span>
+                <span class="ml-1">• ${escapeHtml(m.role)}</span>
+              </div>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="text-xs font-bold text-slate-700">${getMemberClassLabel(m) ? 'Lớp ' + escapeHtml(getMemberClassLabel(m)) : 'Chưa cập nhật lớp'}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(m.major)} • Năm ${m.year}</div>
+            </td>
+            <td class="py-3.5 px-4 text-xs text-slate-600 max-w-xs">
+              ${lastHist ? `<div>${escapeHtml(lastHist.reason)}</div><div class="text-[11px] text-slate-400 mt-0.5">Ngày ${formatDateVN(lastHist.date)}</div>` : '<span class="text-slate-400">—</span>'}
+            </td>
+            <td class="py-3.5 px-4 text-right font-extrabold text-slate-700">
+              ${formatNum(m.T)}đ
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <button type="button" onclick="openMemberDetail('${m.id}')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 mr-1.5 cursor-pointer">
+                Xem dữ liệu
+              </button>
+              <button type="button" onclick="openPurgeMemberModal('${m.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200 transition cursor-pointer">
+                Xóa tên & dữ liệu
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openPurgeMemberModal(memberId) {
+      if (!hasPerm('manageMembers')) {
+        showToast('Bạn không có quyền xóa thành viên.', 'error');
+        return;
+      }
+      const m = appState.members.find(x => x.id === memberId);
+      if (!m) return;
+      const logCount = appState.logs.filter(l => l.memberId === memberId).length;
+      document.getElementById('purgeTargetMemberId').value = m.id;
+      document.getElementById('purgeVerifyPassword').value = '';
+      document.getElementById('purgeMemberSummary').innerHTML = `
+        Bạn sắp xóa vĩnh viễn thành viên <strong>${escapeHtml(m.name)}</strong> (MSSV: <strong>${escapeHtml(m.mssv)}</strong>, trạng thái: <strong>${escapeHtml(m.memberType)}</strong>) cùng toàn bộ <strong>${logCount} bản ghi điểm</strong>, dữ liệu điểm danh và tài khoản đăng nhập liên quan.
+      `;
+      const modal = document.getElementById('purgeMemberModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('purgeVerifyPassword').focus(), 50);
+    }
+
+    function closePurgeMemberModal() {
+      const modal = document.getElementById('purgeMemberModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('purgeTargetMemberId').value = '';
+      document.getElementById('purgeVerifyPassword').value = '';
+    }
+
+    function handlePurgeMemberSubmit(e) {
+      e.preventDefault();
+      if (!hasPerm('manageMembers') || !appState.currentUser) {
+        showToast('Bạn không có quyền thực hiện thao tác này.', 'error');
+        return;
+      }
+      const memberId = document.getElementById('purgeTargetMemberId').value;
+      const enteredPwd = document.getElementById('purgeVerifyPassword').value.trim();
+
+      if (enteredPwd !== appState.currentUser.password) {
+        showToast('Mật khẩu xác thực không chính xác!', 'error');
+        return;
+      }
+
+      const targetMember = appState.members.find(x => x.id === memberId);
+      if (!targetMember) {
+        closePurgeMemberModal();
+        return;
+      }
+
+      const targetMssv = String(targetMember.mssv || '').trim().toUpperCase();
+      appState.members = appState.members.filter(x => x.id !== memberId);
+      appState.logs = appState.logs.filter(l => l.memberId !== memberId);
+      appState.attendanceSessions = (appState.attendanceSessions || []).map(sess => ({
+        ...sess,
+        records: Array.isArray(sess.records) ? sess.records.filter(r => r.memberId !== memberId) : []
+      }));
+      appState.accounts = appState.accounts.filter(a =>
+        a.isSuperAdmin || (a.memberId !== memberId && String(a.username || '').trim().toUpperCase() !== targetMssv)
+      );
+
+      saveState();
+      closePurgeMemberModal();
+      renderRanking();
+      populateLogMemberFilter();
+      renderLogs();
+      if (appState.activeTab === 'members') renderMembersTab();
+      showToast(`Đã xác thực & xóa vĩnh viễn thành viên ${targetMember.name} cùng toàn bộ dữ liệu!`, 'success');
     }
 
     function openMemberDetail(memberId) {
@@ -2999,6 +3529,19 @@
     // =========================================================================
     // 8. TAB 2: NHẬT KÝ (CÔNG KHAI)
     // =========================================================================
+    let logsPageSize = 50;
+    let logsCurrentPage = 1;
+
+    function resetLogsPaginationAndRender() {
+      logsCurrentPage = 1;
+      renderLogs();
+    }
+
+    function changeLogsPage(delta) {
+      logsCurrentPage = Math.max(1, logsCurrentPage + delta);
+      renderLogs();
+    }
+
     function populateLogMemberFilter() {
       const sel = document.getElementById('logFilterMember');
       const current = sel.value;
@@ -3043,7 +3586,14 @@
         return;
       }
 
-      tbody.innerHTML = filtered.map(log => {
+      const totalPages = Math.max(1, Math.ceil(filtered.length / logsPageSize));
+      if (logsCurrentPage > totalPages) logsCurrentPage = totalPages;
+      const startIdx = (logsCurrentPage - 1) * logsPageSize;
+      const pageItems = filtered.slice(startIdx, startIdx + logsPageSize);
+
+      document.getElementById('logsFilteredInfo').textContent = `${filtered.length} bản ghi • Trang ${logsCurrentPage}/${totalPages}`;
+
+      tbody.innerHTML = pageItems.map(log => {
         const mem = memberMap[log.memberId];
         const meta = getCategoryMeta(log.group, log.code);
         const isMinus = log.group === 'D';
@@ -3087,6 +3637,30 @@
           </tr>
         `;
       }).join('');
+
+      let pagerEl = document.getElementById('logsPaginationBar');
+      if (!pagerEl && tbody.parentElement && tbody.parentElement.parentElement) {
+        pagerEl = document.createElement('div');
+        pagerEl.id = 'logsPaginationBar';
+        pagerEl.className = 'px-5 py-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs text-slate-600 bg-slate-50/50';
+        tbody.parentElement.parentElement.appendChild(pagerEl);
+      }
+      if (pagerEl) {
+        if (filtered.length <= logsPageSize) {
+          pagerEl.classList.add('hidden');
+          pagerEl.innerHTML = '';
+        } else {
+          pagerEl.classList.remove('hidden');
+          pagerEl.innerHTML = `
+            <span>Hiển thị <strong>${startIdx + 1}–${Math.min(filtered.length, startIdx + logsPageSize)}</strong> / <strong>${filtered.length}</strong> bản ghi</span>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="changeLogsPage(-1)" ${logsCurrentPage <= 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40 cursor-pointer">← Trước</button>
+              <span class="px-2 font-bold text-slate-800">${logsCurrentPage} / ${totalPages}</span>
+              <button type="button" onclick="changeLogsPage(1)" ${logsCurrentPage >= totalPages ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white font-bold disabled:opacity-40 cursor-pointer">Sau →</button>
+            </div>
+          `;
+        }
+      }
     }
 
     function deleteLogEntry(logId) {
@@ -3141,7 +3715,7 @@
 
       const memberSelect = document.getElementById('entryMemberId');
       const prev = memberSelect.value;
-      memberSelect.innerHTML = appState.members.map(m =>
+      memberSelect.innerHTML = appState.members.filter(m => !isMemberLockedStatus(m.memberType)).map(m =>
         `<option value="${m.id}">${escapeHtml(m.name)} (${escapeHtml(m.mssv)} — ${escapeHtml(m.memberType)})</option>`
       ).join('');
       if (prev && appState.members.some(m => m.id === prev)) memberSelect.value = prev;
@@ -3912,6 +4486,7 @@
               <div class="flex items-center gap-1.5">
                 <button type="button" onclick="editAccount('${acc.id}')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer">Sửa</button>
                 ${!acc.isSuperAdmin ? `
+                  ${acc.memberId ? `<button type="button" onclick="resetMemberPasswordToDefault('${acc.id}')" title="Đặt lại mật khẩu về 4 số cuối MSSV" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 cursor-pointer">Đặt lại MK</button>` : ''}
                   <button type="button" onclick="toggleAccountActive('${acc.id}')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border cursor-pointer ${acc.active !== false ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}">
                     ${acc.active !== false ? 'Khóa' : 'Mở khóa'}
                   </button>
@@ -4016,6 +4591,17 @@
       }
     }
 
+    function resetMemberPasswordToDefault(accId) {
+      if (!hasPerm('manageAccounts')) { showToast('Bạn không có quyền đặt lại mật khẩu.', 'error'); return; }
+      const acc = appState.accounts.find(a => a.id === accId);
+      if (!acc || acc.isSuperAdmin) return;
+      const defaultPwd = getDefaultMemberPassword(acc.username);
+      acc.password = defaultPwd;
+      saveState();
+      renderAccountsManager();
+      showToast(`Đã đặt lại mật khẩu của ${acc.displayName} (${acc.username}) về mặc định.`, 'success');
+    }
+
     function toggleAccountActive(accId) {
       if (!hasPerm('manageAccounts')) { showToast('Bạn không có quyền khóa/mở khóa tài khoản.', 'error'); return; }
       const acc = appState.accounts.find(a => a.id === accId);
@@ -4072,18 +4658,22 @@
       if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-      if (file.size > 500 * 1024) {
-        showToast('Ảnh vượt quá 500KB. Vui lòng chọn ảnh nhẹ hơn.', 'error');
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Ảnh vượt quá 2MB. Vui lòng chọn ảnh nhỏ hơn.', 'error');
         e.target.value = '';
         return;
       }
       const reader = new FileReader();
       reader.onload = ev => {
-        appState.settings.logoUrl = ev.target.result;
-        appState.settings.logoSourceLabel = `Ảnh tải lên: ${file.name}`;
-        saveState();
-        applyThemeAndBranding();
-        showToast('Đã cập nhật Logo CLB mới!', 'success');
+        const rawDataUrl = ev.target.result;
+        renderPngIconFromSource(rawDataUrl, 256, (optUrl) => {
+          const finalUrl = (optUrl && optUrl.length < String(rawDataUrl).length) ? optUrl : rawDataUrl;
+          appState.settings.logoUrl = finalUrl;
+          appState.settings.logoSourceLabel = `Ảnh tối ưu: ${file.name}`;
+          saveState();
+          applyThemeAndBranding();
+          showToast('Đã tối ưu & cập nhật Logo CLB mới!', 'success');
+        }, true);
       };
       reader.readAsDataURL(file);
     }
@@ -4520,70 +5110,241 @@
     // =========================================================================
     // 13B. ĐỒNG BỘ TRỰC TUYẾN GOOGLE SHEETS (GOOGLE APPS SCRIPT)
     // =========================================================================
-    const APPS_SCRIPT_TEMPLATE = `// MÃ NGUỒN GOOGLE APPS SCRIPT CHO HỆ THỐNG ĐIỂM CỐNG HIẾN CLB CYD MEDIA
-// Tự động tạo sheet dữ liệu, đồng bộ 2 chiều và tự xuất file .json theo ngày vào Google Drive (giữ 7 ngày gần nhất)
+    const APPS_SCRIPT_TEMPLATE = `// MÃ NGUỒN GOOGLE APPS SCRIPT CHO HỆ THỐNG ĐIỂM CỐNG HIẾN CLB CYD MEDIA (BẢO MẬT MỨC 1)
+// Xác thực tài khoản từng thành viên (MSSV + mật khẩu) trước khi trả dữ liệu, hỗ trợ tự đổi mật khẩu,
+// tự động khóa tài khoản Rời CLB / Đình chỉ và tự sao lưu file .json theo ngày vào Google Drive (giữ 7 ngày gần nhất)
+
+const CACHE_STATE_KEY = 'CYD_MEDIA_STATE_CACHE_V2';
 
 function doGet(e) {
-  return handleRequest_(e, 'GET');
+  // Chặn đọc dữ liệu công khai qua GET khi chưa xác thực
+  return jsonResponse_({ ok: false, error: 'Trang nội bộ, vui lòng đăng nhập để truy cập dữ liệu.' }, e && e.parameter && e.parameter.callback);
 }
 
 function doPost(e) {
-  return handleRequest_(e, 'POST');
+  return handleRequest_(e);
 }
 
-function handleRequest_(e, method) {
+function getDefaultMemberPassword_(mssv) {
+  const clean = String(mssv || '').trim();
+  return clean.length >= 4 ? clean.slice(-4) : (clean || '1234');
+}
+
+function syncMemberAccountsServer_(members, accounts) {
+  const accs = Array.isArray(accounts) ? accounts.slice() : [
+    {
+      id: 'acc_super_admin_01',
+      username: 'Admin01',
+      password: '1234',
+      displayName: 'Quản trị viên 01 (Admin01)',
+      roleLabel: 'Super Admin • Quyền cao nhất',
+      isSuperAdmin: true,
+      active: true,
+      permissions: { addP: true, addR: true, addD: true, manageMembers: true, attendance: true, deleteLogs: true, manageSettings: true, manageAccounts: true }
+    },
+    {
+      id: 'acc_super_admin_02',
+      username: 'Admin02',
+      password: '1234',
+      displayName: 'Quản trị viên 02 (Admin02)',
+      roleLabel: 'Super Admin • Quyền cao nhất',
+      isSuperAdmin: true,
+      active: true,
+      permissions: { addP: true, addR: true, addD: true, manageMembers: true, attendance: true, deleteLogs: true, manageSettings: true, manageAccounts: true }
+    }
+  ];
+  (members || []).forEach(function(m) {
+    const mssv = String(m.mssv || '').trim().toUpperCase();
+    if (!mssv) return;
+    const locked = (m.memberType === 'Rời CLB' || m.memberType === 'Đình chỉ');
+    let acc = null;
+    for (let i = 0; i < accs.length; i++) {
+      if (accs[i].memberId === m.id || (!accs[i].isSuperAdmin && String(accs[i].username || '').trim().toUpperCase() === mssv)) {
+        acc = accs[i];
+        break;
+      }
+    }
+    if (!acc) {
+      accs.push({
+        id: 'acc_mem_' + m.id,
+        memberId: m.id,
+        username: mssv,
+        password: getDefaultMemberPassword_(mssv),
+        displayName: m.name || mssv,
+        roleLabel: m.role || 'Thành viên CLB',
+        isSuperAdmin: false,
+        active: !locked,
+        permissions: { addP: false, addR: false, addD: false, manageMembers: false, attendance: false, deleteLogs: false, manageSettings: false, manageAccounts: false }
+      });
+    } else if (!acc.isSuperAdmin) {
+      acc.memberId = m.id;
+      acc.username = mssv;
+      acc.displayName = m.name || acc.displayName;
+      acc.roleLabel = m.role || acc.roleLabel || 'Thành viên CLB';
+      acc.active = !locked;
+      if (!acc.password) acc.password = getDefaultMemberPassword_(mssv);
+    }
+  });
+  return accs;
+}
+
+function readStateFromSheet_(stateSheet) {
+  try {
+    const cachedRaw = CacheService.getScriptCache().get(CACHE_STATE_KEY);
+    if (cachedRaw) {
+      const cachedObj = JSON.parse(cachedRaw);
+      if (cachedObj && cachedObj.data) {
+        return { empty: false, updatedAt: String(cachedObj.updatedAt || ''), data: cachedObj.data };
+      }
+    }
+  } catch (cErr) {}
+
+  const meta = stateSheet.getRange(2, 1, 1, 3).getValues()[0];
+  const updatedAt = meta[0] || '';
+  const chunkCount = Number(meta[2]) || 0;
+  if (!updatedAt || chunkCount === 0) {
+    return { empty: true, updatedAt: '', data: null };
+  }
+  const chunkRows = stateSheet.getRange(3, 1, chunkCount, 1).getValues();
+  const fullJson = chunkRows.map(function(r) { return r[0]; }).join('');
+  const data = JSON.parse(fullJson);
+  return { empty: false, updatedAt: String(updatedAt), data: data };
+}
+
+function writeStateToSheet_(ss, stateSheet, data, updatedBy, nowStr) {
+  data.accounts = syncMemberAccountsServer_(data.members, data.accounts);
+  const jsonStr = JSON.stringify(data);
+  stateSheet.clearContents();
+  stateSheet.getRange(1, 1, 1, 3).setValues([['UPDATED_AT', 'UPDATED_BY', 'CHUNK_COUNT']]);
+  const chunkSize = 45000;
+  const chunks = [];
+  for (let i = 0; i < jsonStr.length; i += chunkSize) {
+    chunks.push([jsonStr.substring(i, i + chunkSize)]);
+  }
+  stateSheet.getRange(2, 1, 1, 3).setValues([[nowStr, updatedBy || 'WebApp', chunks.length]]);
+  if (chunks.length > 0) {
+    stateSheet.getRange(3, 1, chunks.length, 1).setValues(chunks);
+  }
+  try {
+    const cache = CacheService.getScriptCache();
+    if (jsonStr.length <= 95000) {
+      cache.put(CACHE_STATE_KEY, JSON.stringify({ updatedAt: nowStr, data: data }), 600);
+    } else {
+      cache.remove(CACHE_STATE_KEY);
+    }
+  } catch (cacheErr) {}
+
+  syncReadableSheets_(ss, data);
+
+  let driveStatus = '';
+  const folderInput = (data.settings && data.settings.driveFolderUrl && String(data.settings.driveFolderUrl).trim())
+    ? String(data.settings.driveFolderUrl).trim()
+    : 'https://drive.google.com/drive/folders/1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH';
+  if (folderInput) {
+    driveStatus = backupDailyJsonToDrive_(folderInput, data, nowStr);
+  }
+  return driveStatus;
+}
+
+function handleRequest_(e) {
   const lock = LockService.getScriptLock();
   lock.tryLock(15000);
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const stateSheet = getOrCreateSheet_(ss, 'SYSTEM_STATE_JSON');
+    const rawBody = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
+    const payload = JSON.parse(rawBody);
+    const action = payload && payload.action ? String(payload.action) : '';
+    const callback = e && e.parameter && e.parameter.callback;
 
-    if (method === 'POST') {
-      const rawBody = (e && e.postData && e.postData.contents) ? e.postData.contents : '{}';
-      const payload = JSON.parse(rawBody);
-      if (payload && payload.action === 'PUSH_STATE' && payload.data) {
-        const jsonStr = JSON.stringify(payload.data);
-        const nowStr = new Date().toISOString();
-        // Lưu bản JSON chuẩn vào ô A2 (tự chia nhiều ô nếu vượt 45.000 ký tự)
-        stateSheet.clearContents();
-        stateSheet.getRange(1, 1, 1, 3).setValues([['UPDATED_AT', 'UPDATED_BY', 'CHUNK_COUNT']]);
-        const chunkSize = 45000;
-        const chunks = [];
-        for (let i = 0; i < jsonStr.length; i += chunkSize) {
-          chunks.push([jsonStr.substring(i, i + chunkSize)]);
+    // 0. LẤY LOGO & MÀU THƯƠNG HIỆU HIỂN THỊ Ở MÀN HÌNH ĐĂNG NHẬP (KHÔNG TRẢ DỮ LIỆU NỘI BỘ)
+    if (action === 'GET_BRANDING') {
+      const stateInfo = readStateFromSheet_(stateSheet);
+      const s = (stateInfo && stateInfo.data && stateInfo.data.settings) ? stateInfo.data.settings : {};
+      return jsonResponse_({
+        ok: true,
+        branding: {
+          logoUrl: s.logoUrl || '',
+          primaryColor: s.primaryColor || '#0f766e',
+          clubName: s.clubName || 'CLB CYD Media',
+          subtitle: s.subtitle || ''
         }
-        stateSheet.getRange(2, 1, 1, 3).setValues([[nowStr, payload.updatedBy || 'WebApp', chunks.length]]);
-        if (chunks.length > 0) {
-          stateSheet.getRange(3, 1, chunks.length, 1).setValues(chunks);
-        }
-        // Đồng thời xuất ra các bảng dễ đọc trực tiếp trên Google Sheets
-        syncReadableSheets_(ss, payload.data);
+      }, callback);
+    }
 
-        // Tự động xuất file .json vào thư mục Google Drive (ưu tiên settings.driveFolderUrl, fallback thư mục mặc định)
-        let driveStatus = '';
-        const folderInput = (payload.data.settings && payload.data.settings.driveFolderUrl && String(payload.data.settings.driveFolderUrl).trim())
-          ? String(payload.data.settings.driveFolderUrl).trim()
-          : 'https://drive.google.com/drive/folders/1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH';
-        if (folderInput) {
-          driveStatus = backupDailyJsonToDrive_(folderInput, payload.data, nowStr);
-        }
-
-        return jsonResponse_({ ok: true, updatedAt: nowStr, driveBackup: driveStatus }, e && e.parameter && e.parameter.callback);
+    // 1. XÁC THỰC ĐĂNG NHẬP & TRẢ DỮ LIỆU NỘI BỘ (MỨC 1)
+    if (action === 'LOGIN_AND_FETCH') {
+      const u = String(payload.username || '').trim().toLowerCase();
+      const p = String(payload.password || '').trim();
+      if (!u || !p) {
+        return jsonResponse_({ ok: false, error: 'Vui lòng nhập đầy đủ tài khoản và mật khẩu.' }, callback);
       }
-      return jsonResponse_({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' }, e && e.parameter && e.parameter.callback);
+      const stateInfo = readStateFromSheet_(stateSheet);
+      if (stateInfo.empty || !stateInfo.data) {
+        return jsonResponse_({ ok: true, empty: true, updatedAt: '' }, callback);
+      }
+      const data = stateInfo.data;
+      data.accounts = syncMemberAccountsServer_(data.members, data.accounts);
+
+      const matched = data.accounts.find(function(a) {
+        return String(a.username || '').trim().toLowerCase() === u && String(a.password || '') === p;
+      });
+      if (!matched) {
+        return jsonResponse_({ ok: false, error: 'Tài khoản hoặc mật khẩu không chính xác.' }, callback);
+      }
+      if (matched.active === false) {
+        return jsonResponse_({ ok: false, error: 'Tài khoản đã bị khóa do Rời CLB hoặc Đình chỉ.' }, callback);
+      }
+
+      // Chỉ trả danh sách đầy đủ accounts nếu user có quyền manageAccounts hoặc Super Admin
+      const canSeeAllAccounts = Boolean(matched.isSuperAdmin || (matched.permissions && matched.permissions.manageAccounts));
+      const safeData = {
+        members: data.members || [],
+        logs: data.logs || [],
+        attendanceSessions: data.attendanceSessions || [],
+        settings: data.settings || {},
+        accounts: canSeeAllAccounts ? data.accounts : [matched]
+      };
+      return jsonResponse_({ ok: true, empty: false, updatedAt: stateInfo.updatedAt, data: safeData }, callback);
     }
 
-    // GET: Đọc trạng thái mới nhất trả về cho trình duyệt
-    const meta = stateSheet.getRange(2, 1, 1, 3).getValues()[0];
-    const updatedAt = meta[0] || '';
-    const chunkCount = Number(meta[2]) || 0;
-    if (!updatedAt || chunkCount === 0) {
-      return jsonResponse_({ ok: true, empty: true, updatedAt: '' }, e && e.parameter && e.parameter.callback);
+    // 2. ĐỔI MẬT KHẨU CÁ NHÂN TỪNG THÀNH VIÊN
+    if (action === 'CHANGE_PASSWORD') {
+      const u = String(payload.username || '').trim().toLowerCase();
+      const oldPwd = String(payload.oldPassword || '').trim();
+      const newPwd = String(payload.newPassword || '').trim();
+      if (!u || !oldPwd || newPwd.length < 3) {
+        return jsonResponse_({ ok: false, error: 'Thông tin đổi mật khẩu không hợp lệ.' }, callback);
+      }
+      const stateInfo = readStateFromSheet_(stateSheet);
+      if (stateInfo.empty || !stateInfo.data) {
+        return jsonResponse_({ ok: false, error: 'Hệ thống chưa có dữ liệu trên Cloud.' }, callback);
+      }
+      const data = stateInfo.data;
+      data.accounts = syncMemberAccountsServer_(data.members, data.accounts);
+      const targetAcc = data.accounts.find(function(a) {
+        return String(a.username || '').trim().toLowerCase() === u && String(a.password || '') === oldPwd;
+      });
+      if (!targetAcc) {
+        return jsonResponse_({ ok: false, error: 'Mật khẩu hiện tại không chính xác.' }, callback);
+      }
+      if (targetAcc.active === false) {
+        return jsonResponse_({ ok: false, error: 'Tài khoản đang bị khóa.' }, callback);
+      }
+      targetAcc.password = newPwd;
+      const nowStr = new Date().toISOString();
+      const driveStatus = writeStateToSheet_(ss, stateSheet, data, targetAcc.displayName + ' (Đổi MK)', nowStr);
+      return jsonResponse_({ ok: true, updatedAt: nowStr, driveBackup: driveStatus }, callback);
     }
-    const chunkRows = stateSheet.getRange(3, 1, chunkCount, 1).getValues();
-    const fullJson = chunkRows.map(r => r[0]).join('');
-    const data = JSON.parse(fullJson);
-    return jsonResponse_({ ok: true, empty: false, updatedAt: String(updatedAt), data: data }, e && e.parameter && e.parameter.callback);
+
+    // 3. ĐẨY TOÀN BỘ DỮ LIỆU TỪ QUẢN TRỊ VIÊN
+    if (action === 'PUSH_STATE' && payload.data) {
+      const nowStr = new Date().toISOString();
+      const driveStatus = writeStateToSheet_(ss, stateSheet, payload.data, payload.updatedBy || 'WebApp', nowStr);
+      return jsonResponse_({ ok: true, updatedAt: nowStr, driveBackup: driveStatus }, callback);
+    }
+
+    return jsonResponse_({ ok: false, error: 'Yêu cầu không hợp lệ hoặc thiếu xác thực.' }, callback);
   } catch (err) {
     return jsonResponse_({ ok: false, error: String(err) }, e && e.parameter && e.parameter.callback);
   } finally {
@@ -4594,7 +5355,7 @@ function handleRequest_(e, method) {
 function extractDriveFolderId_(urlOrId) {
   const str = String(urlOrId || '').trim();
   if (!str) return '';
-  const m1 = str.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+  const m1 = str.match(/\\/folders\\/([a-zA-Z0-9_-]+)/);
   if (m1 && m1[1]) return m1[1];
   const m2 = str.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (m2 && m2[1]) return m2[1];
@@ -4609,7 +5370,6 @@ function backupDailyJsonToDrive_(folderUrlOrId, data, nowIso) {
     const rootFolder = DriveApp.getFolderById(folderId);
     const todayStr = Utilities.formatDate(new Date(), 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd');
 
-    // Tìm hoặc tạo thư mục con theo ngày (VD: 2026-11-24)
     let dayFolder = null;
     const subIter = rootFolder.getFoldersByName(todayStr);
     if (subIter.hasNext()) {
@@ -4618,17 +5378,15 @@ function backupDailyJsonToDrive_(folderUrlOrId, data, nowIso) {
       dayFolder = rootFolder.createFolder(todayStr);
     }
 
-    // Đóng gói chuẩn định dạng file sao lưu .json của hệ thống
     const backupPayload = {
       app: 'CLB_CYD_Media_Points_System',
-      version: '3.0',
+      version: '3.1',
       exportedAt: nowIso,
       data: data
     };
     const prettyJson = JSON.stringify(backupPayload, null, 2);
     const fileName = 'CYD_Media_Backup_' + todayStr + '.json';
 
-    // Ghi đè file mới nhất trong thư mục của ngày hôm nay
     const fileIter = dayFolder.getFilesByName(fileName);
     if (fileIter.hasNext()) {
       const existingFile = fileIter.next();
@@ -4640,17 +5398,16 @@ function backupDailyJsonToDrive_(folderUrlOrId, data, nowIso) {
       dayFolder.createFile(fileName, prettyJson, MimeType.PLAIN_TEXT);
     }
 
-    // Chỉ giữ lại 7 thư mục ngày gần nhất (định dạng YYYY-MM-DD), cũ hơn đưa vào thùng rác
     const allSubs = rootFolder.getFolders();
     const datedFolders = [];
     while (allSubs.hasNext()) {
       const f = allSubs.next();
       const name = f.getName();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(name)) {
+      if (/^\\d{4}-\\d{2}-\\d{2}$/.test(name)) {
         datedFolders.push({ name: name, folder: f });
       }
     }
-    datedFolders.sort((a, b) => b.name.localeCompare(a.name));
+    datedFolders.sort(function(a, b) { return b.name.localeCompare(a.name); });
     if (datedFolders.length > 7) {
       for (let i = 7; i < datedFolders.length; i++) {
         datedFolders[i].folder.setTrashed(true);
@@ -4669,28 +5426,25 @@ function getOrCreateSheet_(ss, name) {
 }
 
 function syncReadableSheets_(ss, data) {
-  // 1. Sheet Thành viên
   const shMem = getOrCreateSheet_(ss, 'Thanh_Vien');
   shMem.clearContents();
   const memRows = [['ID', 'Họ và tên', 'MSSV', 'Ngành học', 'Năm', 'Chức vụ', 'Loại TV', 'Đủ ĐK K', 'Xét ĐTB']];
-  (data.members || []).forEach(m => {
+  (data.members || []).forEach(function(m) {
     memRows.push([m.id, m.name, m.mssv, m.major, m.year, m.role, m.memberType, m.eligibleForK ? 'Có' : 'Không', m.inAveragePool ? 'Có' : 'Không']);
   });
   shMem.getRange(1, 1, memRows.length, memRows[0].length).setValues(memRows);
 
-  // 2. Sheet Nhật ký điểm
   const shLog = getOrCreateSheet_(ss, 'Nhat_Ky_Diem');
   shLog.clearContents();
   const memMap = {};
-  (data.members || []).forEach(m => { memMap[m.id] = m.name; });
+  (data.members || []).forEach(function(m) { memMap[m.id] = m.name; });
   const logRows = [['Ngày', 'Thành viên', 'Nhóm', 'Mã mục', 'Số điểm', 'Tháng', 'Ghi chú / Minh chứng', 'Người duyệt']];
-  (data.logs || []).forEach(l => {
+  (data.logs || []).forEach(function(l) {
     logRows.push([l.date, memMap[l.memberId] || l.memberId, l.group, l.code, (l.group === 'D' ? -1 : 1) * Number(l.points), l.month || '', l.note, l.approver]);
   });
   shLog.getRange(1, 1, logRows.length, logRows[0].length).setValues(logRows);
 }
 
-// Chạy thử hàm này 1 lần trong trình soạn thảo Apps Script để cấp quyền DriveApp nếu Google hỏi quyền
 function capQuyenGoogleDrive() {
   const folder = DriveApp.getFolderById('1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH');
   Logger.log('Đã kết nối thành công thư mục Drive: ' + folder.getName());
@@ -4914,14 +5668,21 @@ function jsonResponse_(obj, optCallback) {
       isCloudSyncing = true;
       updateCloudSyncUI('syncing', 'Đang tải...');
       try {
-        let json = null;
-        try {
-          const sep = url.includes('?') ? '&' : '?';
-          const res = await fetch(`${url}${sep}t=${Date.now()}`);
-          json = await res.json();
-        } catch (fetchErr) {
-          json = await fetchCloudJsonViaJsonp(url);
+        const sess = getSessionCredentials();
+        if (!sess) {
+          isCloudSyncing = false;
+          return;
         }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'LOGIN_AND_FETCH',
+            username: sess.username,
+            password: sess.password
+          })
+        });
+        const json = await res.json();
         if (!json || !json.ok) {
           throw new Error((json && json.error) || 'Lỗi đọc dữ liệu');
         }
@@ -4952,7 +5713,8 @@ function jsonResponse_(obj, optCallback) {
           appState.members = json.data.members;
           appState.logs = json.data.logs;
           appState.attendanceSessions = Array.isArray(json.data.attendanceSessions) ? json.data.attendanceSessions : [];
-          appState.accounts = (Array.isArray(json.data.accounts) && json.data.accounts.length > 0) ? json.data.accounts : getDefaultAccounts();
+          const syncedAccs = (Array.isArray(json.data.accounts) && json.data.accounts.length > 0) ? json.data.accounts : getDefaultAccounts();
+          appState.accounts = syncMemberAccounts(appState.members, syncedAccs);
           appState.settings = {
             ...defSet,
             ...(json.data.settings || {}),
@@ -4962,10 +5724,14 @@ function jsonResponse_(obj, optCallback) {
             cloudApiUrl: currentUrl,
             driveFolderUrl: resolvedDriveUrl
           };
-          // Cập nhật lại currentUser nếu đang đăng nhập
+          // Cập nhật lại currentUser nếu đang đăng nhập; nếu bị khóa thì tự đăng xuất
           if (appState.currentUser) {
             const refreshedUser = appState.accounts.find(a => a.id === appState.currentUser.id || a.username === appState.currentUser.username);
-            if (refreshedUser && refreshedUser.active !== false) appState.currentUser = refreshedUser;
+            if (!refreshedUser || refreshedUser.active === false) {
+              logoutUser();
+              return;
+            }
+            appState.currentUser = refreshedUser;
           }
           saveState(true); // Lưu vào LocalStorage nhưng không đẩy ngược lại Cloud
           applyThemeAndBranding();
@@ -5173,18 +5939,18 @@ function jsonResponse_(obj, optCallback) {
         });
       }
 
-      // Đóng modal khi bấm ra ngoài hoặc nhấn Escape
-      ['loginModal', 'changePasswordModal', 'memberModal', 'editCategoryModal', 'confirmModal', 'pwaInstallModal'].forEach(id => {
+      // Đóng modal khi bấm ra ngoài hoặc nhấn Escape (không cho đóng cổng loginModal khi chưa đăng nhập)
+      ['changePasswordModal', 'memberModal', 'editCategoryModal', 'confirmModal', 'pwaInstallModal', 'purgeMemberModal'].forEach(id => {
         const modal = document.getElementById(id);
         if (modal) {
           modal.addEventListener('click', e => {
             if (e.target === modal) {
-              if (id === 'loginModal') closeLoginModal();
               if (id === 'changePasswordModal') closeChangePasswordModal();
               if (id === 'memberModal') closeMemberModal();
               if (id === 'editCategoryModal') closeEditCategoryModal();
               if (id === 'confirmModal') closeConfirmModal();
               if (id === 'pwaInstallModal') closePwaInstallModal();
+              if (id === 'purgeMemberModal') closePurgeMemberModal();
             }
           });
         }
@@ -5192,22 +5958,26 @@ function jsonResponse_(obj, optCallback) {
 
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-          closeLoginModal();
           closeChangePasswordModal();
           closeMemberModal();
           closeEditCategoryModal();
           closeConfirmModal();
           closePwaInstallModal();
+          closePurgeMemberModal();
         }
       });
 
-      // Khởi tạo đồng bộ trực tuyến Google Sheets nếu đã cấu hình URL
+      // Khởi tạo đồng bộ trực tuyến Google Sheets nếu đã có phiên đăng nhập
       updateCloudSyncUI('ok');
-      if (getCloudApiUrl()) {
-        syncFromCloud(false);
+      const existingSess = getSessionCredentials();
+      if (!existingSess) {
+        openLoginModal();
+        fetchPublicBrandingForGate();
+      } else if (getCloudApiUrl()) {
+        attemptLogin(existingSess.username, existingSess.password, true);
       }
       setInterval(() => {
-        if (getCloudApiUrl() && !document.hidden && !isCloudSyncing) {
+        if (appState.currentUser && getCloudApiUrl() && !document.hidden && !isCloudSyncing) {
           syncFromCloud(false);
         }
       }, 120000);
