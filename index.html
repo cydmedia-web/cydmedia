@@ -1625,6 +1625,7 @@
     // =========================================================================
     const STORAGE_KEY = 'cyd_media_points_system_v5';
     const DEFAULT_CLOUD_API_URL = 'https://script.google.com/macros/s/AKfycbyT1WIFHIhHRiFd9PJzGlqmMg4FwVgWY8ttUu-Ys-p8rgTNd62-gn98cc2AXZOr8t_2Cg/exec'; // Dán URL Google Apps Script /exec vào đây nếu muốn cố định sẵn trong file HTML
+    const DEFAULT_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH';
     const BASE_SCORE = 10;
     const YEAR2_PRIORITY_MAJORS = ['Điều dưỡng', 'Hộ sinh', 'Y sĩ đa khoa'];
 
@@ -1690,20 +1691,6 @@
             addP: true, addR: true, addD: true,
             manageMembers: true, attendance: true, deleteLogs: true,
             manageSettings: true, manageAccounts: true
-          }
-        },
-        {
-          id: 'acc_demo_att',
-          username: 'thuky',
-          password: '1234',
-          displayName: 'Thư ký Điểm danh',
-          roleLabel: 'Tài khoản phụ (Mẫu)',
-          isSuperAdmin: false,
-          active: true,
-          permissions: {
-            addP: true, addR: false, addD: false,
-            manageMembers: false, attendance: true, deleteLogs: false,
-            manageSettings: false, manageAccounts: false
           }
         }
       ];
@@ -1820,7 +1807,7 @@
         rules: getDefaultRules(),
         uiLabels: getDefaultUiLabels(),
         cloudApiUrl: DEFAULT_CLOUD_API_URL,
-        driveFolderUrl: ''
+        driveFolderUrl: DEFAULT_DRIVE_FOLDER_URL
       };
     }
 
@@ -1939,7 +1926,10 @@
               ...(parsed.settings || {}),
               categories: (parsed.settings && parsed.settings.categories) ? parsed.settings.categories : defSet.categories,
               rules: (parsed.settings && Array.isArray(parsed.settings.rules)) ? parsed.settings.rules : defSet.rules,
-              uiLabels: { ...getDefaultUiLabels(), ...((parsed.settings && parsed.settings.uiLabels) || {}) }
+              uiLabels: { ...getDefaultUiLabels(), ...((parsed.settings && parsed.settings.uiLabels) || {}) },
+              driveFolderUrl: (parsed.settings && parsed.settings.driveFolderUrl && String(parsed.settings.driveFolderUrl).trim())
+                ? String(parsed.settings.driveFolderUrl).trim()
+                : DEFAULT_DRIVE_FOLDER_URL
             };
             lastCommittedSnapshot = getSerializableAppData();
             return;
@@ -2890,7 +2880,7 @@
         <p class="text-xs text-white/85 mt-0.5">${escapeHtml(m.mssv)} • ${escapeHtml(m.major)} (Năm ${m.year}) • ${escapeHtml(m.role)}</p>
       `;
 
-      const sortedLogs = [...m.logs].sort((a, b) => b.date.localeCompare(a.date));
+      const sortedLogs = [...m.logs].sort((a, b) => b.date.localeCompare(a.date) || (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
       const statusHist = Array.isArray(m.statusHistory) ? [...m.statusHistory].reverse() : [];
 
       const capBarsHtml = m.cappedDetails.length > 0 ? `
@@ -3027,7 +3017,7 @@
       const memberMap = Object.fromEntries(appState.members.map(m => [m.id, m]));
 
       const filtered = [...appState.logs]
-        .sort((a, b) => b.date.localeCompare(a.date))
+        .sort((a, b) => b.date.localeCompare(a.date) || (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0))
         .filter(log => {
           if (fMem !== 'ALL' && log.memberId !== fMem) return false;
           if (fGrp === 'ATT') {
@@ -3304,6 +3294,10 @@
       e.preventDefault();
       const memberId = document.getElementById('entryMemberId').value;
       const group = document.getElementById('entryGroup').value;
+      if ((group === 'P' && !hasPerm('addP')) || (group === 'R' && !hasPerm('addR')) || (group === 'D' && !hasPerm('addD'))) {
+        showToast('Bạn không có quyền thực hiện thao tác nhập điểm này.', 'error');
+        return;
+      }
       const code = document.getElementById('entryCategory').value;
       const points = Number(document.getElementById('entryPoints').value);
       const date = document.getElementById('entryDate').value;
@@ -3316,10 +3310,12 @@
         return;
       }
 
+      const nowTs = Date.now();
       appState.logs.unshift({
-        id: 'log_' + Date.now(),
+        id: 'log_' + nowTs,
+        createdAt: nowTs,
         memberId, group, code, points, date, month, note,
-        approver: appState.currentUser ? appState.currentUser.displayName : 'Admin'
+        approver: appState.currentUser ? appState.currentUser.displayName : 'Admin01'
       });
       saveState();
 
@@ -3411,6 +3407,7 @@
 
     function submitNewMember(e) {
       e.preventDefault();
+      if (!hasPerm('manageMembers')) { showToast('Bạn không có quyền quản lý thành viên.', 'error'); return; }
       const name = document.getElementById('memName').value.trim();
       const mssv = document.getElementById('memMssv').value.trim().toUpperCase();
       const major = document.getElementById('memMajor').value;
@@ -3447,6 +3444,7 @@
 
     function submitMemberStatusChange(e) {
       e.preventDefault();
+      if (!hasPerm('manageMembers')) { showToast('Bạn không có quyền cập nhật thành viên.', 'error'); return; }
       const memberId = document.getElementById('statusMemberId').value;
       const newType = document.getElementById('statusNewType').value;
       const nameInput = document.getElementById('statusNewName');
@@ -3588,6 +3586,7 @@
     }
 
     function toggleMemberFlag(memberId, flag) {
+      if (!hasPerm('manageMembers')) { showToast('Bạn không có quyền cập nhật thành viên.', 'error'); return; }
       const m = appState.members.find(x => x.id === memberId);
       if (!m) return;
       m[flag] = !m[flag];
@@ -3598,6 +3597,7 @@
     }
 
     function confirmDeleteMember(memberId) {
+      if (!hasPerm('manageMembers')) { showToast('Bạn không có quyền xóa thành viên.', 'error'); return; }
       const m = appState.members.find(x => x.id === memberId);
       if (!m) return;
       openConfirmModal(
@@ -3741,6 +3741,7 @@
     }
 
     function saveAttendanceSession() {
+      if (!hasPerm('attendance')) { showToast('Bạn không có quyền điểm danh.', 'error'); return; }
       const type = document.getElementById('attSessionType').value;
       const title = document.getElementById('attSessionTitle').value.trim();
       const date = document.getElementById('attSessionDate').value;
@@ -3765,9 +3766,11 @@
           excused: Boolean(d.excused)
         });
 
+        const attTs = Date.now();
         if (d.status === 'ontime') {
           appState.logs.unshift({
-            id: 'log_att_' + Date.now() + '_' + m.id,
+            id: 'log_att_' + attTs + '_' + m.id,
+            createdAt: attTs,
             memberId: m.id, group: 'P', code: 'S', points: 1, date, month: '',
             note: `[Điểm danh • ${type}] ${title}: Đúng giờ`,
             approver, fromAttendance: true
@@ -3775,7 +3778,8 @@
           logsCreated++;
         } else if (d.status === 'late' && Number(d.lateMinutes) > 15) {
           appState.logs.unshift({
-            id: 'log_att_' + Date.now() + '_' + m.id,
+            id: 'log_att_' + attTs + '_' + m.id,
+            createdAt: attTs,
             memberId: m.id, group: 'D', code: 'L', points: 1, date, month: '',
             note: `[Điểm danh • ${type}] ${title}: Trễ ${d.lateMinutes} phút (>15p)`,
             approver, fromAttendance: true
@@ -3783,7 +3787,8 @@
           logsCreated++;
         } else if (d.status === 'absent' && !d.excused) {
           appState.logs.unshift({
-            id: 'log_att_' + Date.now() + '_' + m.id,
+            id: 'log_att_' + attTs + '_' + m.id,
+            createdAt: attTs,
             memberId: m.id, group: 'D', code: 'A', points: 1, date, month: '',
             note: `[Điểm danh • ${type}] ${title}: Vắng không phép${d.reason ? ' (' + d.reason + ')' : ''}`,
             approver, fromAttendance: true
@@ -3961,6 +3966,7 @@
 
     function submitAccountForm(e) {
       e.preventDefault();
+      if (!hasPerm('manageAccounts')) { showToast('Bạn không có quyền quản lý tài khoản.', 'error'); return; }
       const editId = document.getElementById('editAccountId').value;
       const username = document.getElementById('accUsername').value.trim();
       const password = document.getElementById('accPassword').value.trim();
@@ -4011,6 +4017,7 @@
     }
 
     function toggleAccountActive(accId) {
+      if (!hasPerm('manageAccounts')) { showToast('Bạn không có quyền khóa/mở khóa tài khoản.', 'error'); return; }
       const acc = appState.accounts.find(a => a.id === accId);
       if (!acc || acc.isSuperAdmin) return;
       acc.active = acc.active === false ? true : false;
@@ -4020,6 +4027,7 @@
     }
 
     function confirmDeleteAccount(accId) {
+      if (!hasPerm('manageAccounts')) { showToast('Bạn không có quyền xóa tài khoản.', 'error'); return; }
       const acc = appState.accounts.find(a => a.id === accId);
       if (!acc || acc.isSuperAdmin) return;
       openConfirmModal(
@@ -4053,6 +4061,7 @@
     }
 
     function applyCustomPrimaryColor(hex) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       appState.settings.primaryColor = hex;
       saveState();
       applyThemeAndBranding();
@@ -4060,6 +4069,7 @@
     }
 
     function handleLogoFileUpload(e) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       if (file.size > 500 * 1024) {
@@ -4079,6 +4089,7 @@
     }
 
     function applyLogoFromUrl() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const url = document.getElementById('logoUrlInput').value.trim();
       if (!url) { showToast('Vui lòng dán đường link ảnh hợp lệ.', 'error'); return; }
       appState.settings.logoUrl = url;
@@ -4089,6 +4100,7 @@
     }
 
     function resetDefaultLogo() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       appState.settings.logoUrl = '';
       appState.settings.logoSourceLabel = 'Đang dùng logo mặc định (SVG)';
       document.getElementById('logoFileInput').value = '';
@@ -4100,6 +4112,7 @@
 
     function saveBrandingText(e) {
       e.preventDefault();
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       appState.settings.clubName = document.getElementById('settingClubName').value.trim() || 'CLB CYD Media';
       appState.settings.subtitle = document.getElementById('settingSubtitle').value.trim();
       appState.settings.monthsPerYear = Math.max(1, Math.min(12, Number(document.getElementById('settingMonthsPerYear').value) || 10));
@@ -4154,6 +4167,7 @@
 
     function addNewCategory(e) {
       e.preventDefault();
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const group = document.getElementById('newCatGroup').value;
       const label = document.getElementById('newCatLabel').value.trim();
       const points = Number(document.getElementById('newCatPoints').value);
@@ -4177,6 +4191,7 @@
     }
 
     function toggleCategoryEnabled(group, code) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const item = (appState.settings.categories[group] || []).find(c => c.code === code);
       if (!item) return;
       item.enabled = item.enabled === false ? true : false;
@@ -4209,6 +4224,7 @@
 
     function saveEditedCategory(e) {
       e.preventDefault();
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const group = document.getElementById('editCatGroup').value;
       const code = document.getElementById('editCatCode').value;
       const item = (appState.settings.categories[group] || []).find(c => c.code === code);
@@ -4227,6 +4243,7 @@
     }
 
     function confirmDeleteCategory(group, code) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       openConfirmModal('Xóa hạng mục điểm?', 'Bạn có chắc muốn xóa hạng mục này khỏi danh sách?', () => {
         appState.settings.categories[group] = (appState.settings.categories[group] || []).filter(c => c.code !== code);
         saveState();
@@ -4237,6 +4254,7 @@
     }
 
     function confirmResetCategories() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       openConfirmModal('Khôi phục danh mục mặc định?', 'Đặt lại 3 nhóm điểm (P, R, D) về đúng quy chế ban đầu?', () => {
         appState.settings.categories = getDefaultCategories();
         saveState();
@@ -4267,6 +4285,7 @@
     }
 
     function saveRuleSection(ruleId) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const rule = (appState.settings.rules || []).find(r => r.id === ruleId);
       if (!rule) return;
       rule.title = document.getElementById(`rule-title-${ruleId}`).value.trim() || rule.title;
@@ -4277,6 +4296,7 @@
     }
 
     function addNewRuleSection() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       appState.settings.rules.push({
         id: 'rule_' + Date.now(),
         title: `${appState.settings.rules.length + 1}. Quy định bổ sung`,
@@ -4288,6 +4308,7 @@
     }
 
     function deleteRuleSection(ruleId) {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       openConfirmModal('Xóa mục quy chế?', 'Xóa mục này khỏi Tab Quy chế?', () => {
         appState.settings.rules = appState.settings.rules.filter(r => r.id !== ruleId);
         saveState();
@@ -4297,6 +4318,7 @@
     }
 
     function confirmResetRules() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       openConfirmModal('Khôi phục quy chế gốc?', 'Đặt lại nội dung quy chế về bản mặc định ban đầu?', () => {
         appState.settings.rules = getDefaultRules();
         saveState();
@@ -4339,6 +4361,7 @@
 
     function saveUiLabels(e) {
       if (e) e.preventDefault();
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       const defaults = getDefaultUiLabels();
       const updated = {};
       Object.keys(defaults).forEach(key => {
@@ -4353,6 +4376,7 @@
     }
 
     function confirmResetUiLabels() {
+      if (!hasPerm('manageSettings')) { showToast('Bạn không có quyền thay đổi cài đặt.', 'error'); return; }
       openConfirmModal(
         'Khôi phục tiêu đề mặc định?',
         'Đặt lại toàn bộ tên tab, thẻ thống kê và tiêu đề về mặc định ban đầu?',
@@ -4470,7 +4494,7 @@
       if (!isSuperAdmin()) { showToast('Chỉ tài khoản Super Admin mới có quyền khôi phục mặc định.', 'error'); return; }
       openConfirmModal(
         'Khôi phục mặc định toàn bộ hệ thống?',
-        'Tất cả dữ liệu hiện tại sẽ bị xóa và đặt lại về dữ liệu mẫu ban đầu (Tài khoản: Admin / 1234).',
+        'Tất cả dữ liệu hiện tại sẽ bị xóa và đặt lại về dữ liệu mẫu ban đầu (Tài khoản gốc: Admin01 & Admin02 / 1234).',
         () => {
           localStorage.removeItem(STORAGE_KEY);
           const seed = getSeedData();
@@ -4535,9 +4559,11 @@ function handleRequest_(e, method) {
         // Đồng thời xuất ra các bảng dễ đọc trực tiếp trên Google Sheets
         syncReadableSheets_(ss, payload.data);
 
-        // Tự động xuất file .json vào thư mục Google Drive nếu đã điền link thư mục
+        // Tự động xuất file .json vào thư mục Google Drive (ưu tiên settings.driveFolderUrl, fallback thư mục mặc định)
         let driveStatus = '';
-        const folderInput = (payload.data.settings && payload.data.settings.driveFolderUrl) ? String(payload.data.settings.driveFolderUrl).trim() : '';
+        const folderInput = (payload.data.settings && payload.data.settings.driveFolderUrl && String(payload.data.settings.driveFolderUrl).trim())
+          ? String(payload.data.settings.driveFolderUrl).trim()
+          : 'https://drive.google.com/drive/folders/1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH';
         if (folderInput) {
           driveStatus = backupDailyJsonToDrive_(folderInput, payload.data, nowStr);
         }
@@ -4664,6 +4690,12 @@ function syncReadableSheets_(ss, data) {
   shLog.getRange(1, 1, logRows.length, logRows[0].length).setValues(logRows);
 }
 
+// Chạy thử hàm này 1 lần trong trình soạn thảo Apps Script để cấp quyền DriveApp nếu Google hỏi quyền
+function capQuyenGoogleDrive() {
+  const folder = DriveApp.getFolderById('1ZMyJBqv4sopBJVbElFvhfFi-g5JYn1xH');
+  Logger.log('Đã kết nối thành công thư mục Drive: ' + folder.getName());
+}
+
 function jsonResponse_(obj, optCallback) {
   const body = JSON.stringify(obj);
   if (optCallback && /^[a-zA-Z0-9_$.]+$/.test(String(optCallback))) {
@@ -4675,10 +4707,16 @@ function jsonResponse_(obj, optCallback) {
 
     let cloudSyncTimer = null;
     let isCloudSyncing = false;
+    let hasPendingLocalPush = false;
     let lastKnownCloudTimestamp = '';
 
     function getCloudApiUrl() {
       return ((appState.settings && appState.settings.cloudApiUrl) || DEFAULT_CLOUD_API_URL || '').trim();
+    }
+
+    function getDriveFolderUrl() {
+      const url = (appState.settings && appState.settings.driveFolderUrl) ? String(appState.settings.driveFolderUrl).trim() : '';
+      return url || DEFAULT_DRIVE_FOLDER_URL;
     }
 
     function updateCloudSyncUI(status = 'idle', customMsg = '') {
@@ -4732,10 +4770,12 @@ function jsonResponse_(obj, optCallback) {
     function queueCloudPush() {
       // Chỉ tự động đẩy lên Cloud khi đã đăng nhập quản trị để tránh khách ghi đè dữ liệu
       if (!appState.currentUser) return;
+      hasPendingLocalPush = true;
       if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
       cloudSyncTimer = setTimeout(() => {
+        cloudSyncTimer = null;
         pushAllToCloud(false);
-      }, 800);
+      }, 650);
     }
 
     async function pushAllToCloud(manualNotify = false) {
@@ -4762,8 +4802,15 @@ function jsonResponse_(obj, optCallback) {
         if (isCloudSyncing) return false;
       }
       isCloudSyncing = true;
+      hasPendingLocalPush = false;
       updateCloudSyncUI('syncing', 'Đồng bộ nền...');
       try {
+        const syncedSettings = {
+          ...appState.settings,
+          driveFolderUrl: getDriveFolderUrl()
+        };
+        appState.settings.driveFolderUrl = syncedSettings.driveFolderUrl;
+
         const payload = {
           action: 'PUSH_STATE',
           updatedBy: appState.currentUser ? `${appState.currentUser.displayName} (${appState.currentUser.username})` : 'Khách',
@@ -4772,7 +4819,7 @@ function jsonResponse_(obj, optCallback) {
             logs: appState.logs,
             attendanceSessions: appState.attendanceSessions,
             accounts: appState.accounts,
-            settings: appState.settings
+            settings: syncedSettings
           }
         };
         const res = await fetch(url, {
@@ -4786,11 +4833,14 @@ function jsonResponse_(obj, optCallback) {
           updateCloudSyncUI('ok');
           if (json.driveBackup && String(json.driveBackup).startsWith('ERR:')) {
             console.warn('Drive backup warning:', json.driveBackup);
-            if (manualNotify) showToast('Đã lưu Sheets, nhưng lỗi ghi Drive (kiểm tra quyền DriveApp hoặc link thư mục).', 'error');
+            showToast('Đã lưu Sheets, nhưng lỗi ghi Drive: cần cấp quyền DriveApp & triển khai lại Web App.', 'error');
           } else if (json.driveBackup === 'INVALID_FOLDER_URL') {
-            if (manualNotify) showToast('Đã lưu Sheets, nhưng link thư mục Google Drive chưa hợp lệ.', 'error');
+            showToast('Đã lưu Sheets, nhưng link thư mục Google Drive chưa hợp lệ.', 'error');
           } else if (manualNotify) {
             showToast(json.driveBackup ? 'Đã đẩy dữ liệu lên Sheets & sao lưu .json vào Drive!' : 'Đã đẩy toàn bộ dữ liệu lên Google Sheets thành công!', 'success');
+          }
+          if (hasPendingLocalPush) {
+            setTimeout(() => pushAllToCloud(false), 400);
           }
           return true;
         } else {
@@ -4852,9 +4902,11 @@ function jsonResponse_(obj, optCallback) {
     async function syncFromCloud(manualNotify = false) {
       const url = getCloudApiUrl();
       if (!url) return;
-      if (cloudSyncTimer && appState.currentUser) {
-        clearTimeout(cloudSyncTimer);
-        cloudSyncTimer = null;
+      if ((cloudSyncTimer || hasPendingLocalPush) && appState.currentUser) {
+        if (cloudSyncTimer) {
+          clearTimeout(cloudSyncTimer);
+          cloudSyncTimer = null;
+        }
         await pushAllToCloud(false);
       }
       if (isCloudSyncing) return;
@@ -4880,10 +4932,23 @@ function jsonResponse_(obj, optCallback) {
           return;
         }
         if (json.data && Array.isArray(json.data.members) && Array.isArray(json.data.logs)) {
-          const isNewer = json.updatedAt && json.updatedAt !== lastKnownCloudTimestamp;
-          lastKnownCloudTimestamp = json.updatedAt || '';
+          if (hasPendingLocalPush && !manualNotify) {
+            updateCloudSyncUI('ok');
+            return;
+          }
+          const incomingTs = String(json.updatedAt || '');
+          const isNewer = incomingTs && (!lastKnownCloudTimestamp || incomingTs > lastKnownCloudTimestamp);
+          if (!manualNotify && lastKnownCloudTimestamp && incomingTs && incomingTs <= lastKnownCloudTimestamp) {
+            updateCloudSyncUI('ok');
+            return;
+          }
+          lastKnownCloudTimestamp = incomingTs || lastKnownCloudTimestamp;
           const defSet = getDefaultSettings();
           const currentUrl = getCloudApiUrl();
+          const resolvedDriveUrl = (json.data.settings && json.data.settings.driveFolderUrl && String(json.data.settings.driveFolderUrl).trim())
+            ? String(json.data.settings.driveFolderUrl).trim()
+            : getDriveFolderUrl();
+
           appState.members = json.data.members;
           appState.logs = json.data.logs;
           appState.attendanceSessions = Array.isArray(json.data.attendanceSessions) ? json.data.attendanceSessions : [];
@@ -4895,9 +4960,7 @@ function jsonResponse_(obj, optCallback) {
             rules: (json.data.settings && Array.isArray(json.data.settings.rules)) ? json.data.settings.rules : defSet.rules,
             uiLabels: { ...getDefaultUiLabels(), ...((json.data.settings && json.data.settings.uiLabels) || {}) },
             cloudApiUrl: currentUrl,
-            driveFolderUrl: (json.data.settings && json.data.settings.driveFolderUrl !== undefined)
-              ? json.data.settings.driveFolderUrl
-              : ((appState.settings && appState.settings.driveFolderUrl) || '')
+            driveFolderUrl: resolvedDriveUrl
           };
           // Cập nhật lại currentUser nếu đang đăng nhập
           if (appState.currentUser) {
@@ -4928,7 +4991,7 @@ function jsonResponse_(obj, optCallback) {
     function updateDriveFolderBadgeUI() {
       const badge = document.getElementById('driveFolderStatusBadge');
       if (!badge) return;
-      const folderUrl = ((appState.settings && appState.settings.driveFolderUrl) || '').trim();
+      const folderUrl = getDriveFolderUrl();
       if (folderUrl) {
         badge.className = 'px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800';
         badge.textContent = '✓ Đã gắn thư mục Drive (Tự lưu 7 ngày)';
@@ -4943,7 +5006,7 @@ function jsonResponse_(obj, optCallback) {
       const driveInput = document.getElementById('driveFolderUrlInput');
       const codeBlock = document.getElementById('appsScriptCodeBlock');
       if (input) input.value = getCloudApiUrl();
-      if (driveInput) driveInput.value = (appState.settings && appState.settings.driveFolderUrl) || '';
+      if (driveInput) driveInput.value = getDriveFolderUrl();
       if (codeBlock) codeBlock.textContent = APPS_SCRIPT_TEMPLATE;
       updateDriveFolderBadgeUI();
       updateCloudSyncUI('ok');
